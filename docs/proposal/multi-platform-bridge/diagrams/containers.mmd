@@ -1,0 +1,21 @@
+C4Container
+    title Containers — a2a-chat-bridge (single Bun executable)
+
+    Person(user, "User")
+
+    System_Boundary(bridge, "a2a-chat-bridge (single process)") {
+        Container(adapter, "Discord Adapter", "discord.js", "Gateway events; DMs/threads/mentions; batched message edits with header-driven backoff")
+        Container(core, "A2A Client Core", "@a2a-js/sdk (portable, no Node APIs)", "Contacts, Conversations, mapping layer, task tracking, SSE parsing")
+        ContainerDb(store, "Soft State", "SQLite / JSON file", "Contact cache; Surface-contextId mappings (rebuildable)")
+        Container(config, "Attachment Config", "YAML / env", "Platform credentials, per-Contact A2A credentials — never agent wiring")
+    }
+
+    System_Ext(discord, "Discord", "Chat platform")
+    System_Ext(agents, "Remote Agents", "A2A Servers (opaque)")
+
+    Rel(user, discord, "Chats")
+    Rel(discord, adapter, "events", "Gateway WebSocket (outbound)")
+    Rel(adapter, core, "normalized events")
+    Rel(core, store, "reads/writes")
+    Rel(core, config, "reads credentials")
+    Rel(core, agents, "A2A v1.0: JSON-RPC / REST + SSE", "HTTPS")

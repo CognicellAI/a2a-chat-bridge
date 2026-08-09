@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    actor U as User (Discord DM)
+    participant D as Discord
+    participant B as Discord Adapter
+    participant C as A2A Client Core
+    participant A as Remote Agent (A2A v1.0)
+
+    U->>D: DM: "https://agent.example.com"
+    D->>B: MESSAGE_CREATE (DM — no privileged intent)
+    B->>C: addContact(url)
+    C->>A: GET /.well-known/agent-card.json
+    A-->>C: Agent Card (skills, bindings, auth)
+    C-->>B: Contact added
+    B->>D: reply with card summary
+    D-->>U: sees Contact
+
+    U->>D: DM: "Summarize this repo's issues"
+    D->>B: MESSAGE_CREATE
+    B->>C: message(Contact, text)
+    C->>A: SendStreamingMessage (Conversation's contextId)
+    A-->>C: SSE: task (TASK_STATE_SUBMITTED)
+    loop batched (~1 edit / 1-2s, header-driven backoff)
+        A-->>C: SSE: statusUpdate / artifactUpdate
+        C-->>B: partial text
+        B->>D: edit reply message
+        D-->>U: watches progress
+    end
+    A-->>C: SSE: statusUpdate (TASK_STATE_COMPLETED), stream closes
+    C-->>B: final text
+    B->>D: final edit
+    D-->>U: answer
+
+    Note over C,A: Non-streaming fallback: SendMessage (returnImmediately: true) + GetTask polling
+    Note over B,C: Restart recovery: SubscribeToTask re-attaches to in-flight tasks (soft state)

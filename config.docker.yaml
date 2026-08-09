@@ -1,0 +1,13 @@
+discord:
+  tokenEnv: DISCORD_BOT_TOKEN
+  channels: []
+
+stateFile: /data/state.json
+editIntervalMs: 1200
+pollIntervalMs: 1500
+configReloadIntervalMs: 2000
+
+# This file is copied into the image. Compose mounts a local config.yaml over it
+# for real Contacts and credentials; the bridge reloads supported settings
+# automatically.
+agents: []

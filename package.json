@@ -1,0 +1,42 @@
+{
+  "name": "a2a-chat-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A self-hosted Discord client for remote A2A v1.0 agents.",
+  "author": "Herman Haggerty",
+  "license": "Apache-2.0",
+  "homepage": "https://cognicellai.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CognicellAI/a2a-chat-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CognicellAI/a2a-chat-bridge/issues"
+  },
+  "keywords": [
+    "a2a",
+    "agents",
+    "discord",
+    "self-hosted"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build --compile ./src/index.ts --outfile dist/a2a-chat-bridge",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --check ."
+  },
+  "dependencies": {
+    "@a2a-js/sdk": "^1.0.1",
+    "discord.js": "^14.27.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

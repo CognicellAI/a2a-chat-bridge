@@ -1,0 +1,14 @@
+services:
+  bridge:
+    build:
+      context: .
+    environment:
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      A2A_CHAT_BRIDGE_CONFIG: /app/config.yaml
+    volumes:
+      - bridge-state:/data
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  bridge-state:

@@ -1,0 +1,15 @@
+C4Context
+    title System Context — a2a-chat-bridge (v1)
+
+    Person(user, "User", "Workspace owner; talks to agents from Discord")
+
+    System(bridge, "a2a-chat-bridge", "Self-hosted, single-tenant A2A client. CPE — a handset, not a switchboard.")
+
+    System_Ext(discord, "Discord", "Chat platform: DMs (primary surface), threads (later), @mentions (ambient entry)")
+    System_Ext(agentA, "Remote Agent A", "A2A Server (opaque) — JSON-RPC binding")
+    System_Ext(agentB, "Remote Agent B", "A2A Server (opaque) — REST binding")
+
+    Rel(user, discord, "Chats")
+    Rel(discord, bridge, "Gateway events", "outbound WebSocket")
+    Rel(bridge, agentA, "SendStreamingMessage, SendMessage, GetTask", "A2A v1.0 JSON-RPC over HTTPS")
+    Rel(bridge, agentB, "SendStreamingMessage, SendMessage, GetTask", "A2A v1.0 REST over HTTPS")
