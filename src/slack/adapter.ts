@@ -1,4 +1,4 @@
-import { App, LogLevel } from "@slack/bolt";
+import { App, LogLevel, type RespondFn, type SlashCommand } from "@slack/bolt";
 import type { SlackChannelPolicy } from "../config.js";
 import type { A2AConnector } from "../core/a2a-connector.js";
 import type { ContactRegistry } from "../core/contacts.js";
@@ -69,6 +69,10 @@ export class SlackAdapter {
       const message = event as SlackEvent;
       if (message.channel_type === "im") await this.handleDm(message, client);
     });
+    this.app.command("/a2a", async ({ command, ack, client, respond }) => {
+      await ack();
+      await this.handleNativeCommand(command, client, respond);
+    });
     await this.app.start();
     console.info("Connected to Slack through Socket Mode.");
   }
@@ -127,6 +131,108 @@ export class SlackAdapter {
       },
       client,
     );
+  }
+
+  private async handleNativeCommand(
+    command: SlashCommand,
+    client: App["client"],
+    respond: RespondFn,
+  ): Promise<void> {
+    const policy = this.policy(command.channel_id);
+    if (!policy) {
+      await respond({
+        response_type: "ephemeral",
+        text: "Use `/a2a` in a channel configured for this bridge.",
+      });
+      return;
+    }
+    const [action, ...arguments_] = command.text.trim().split(/\s+/);
+    if (!action || action === "help") {
+      await respond({
+        response_type: "ephemeral",
+        text: this.nativeCommandHelp(),
+      });
+      return;
+    }
+    if (action === "agents") {
+      const contacts = await this.availableContacts(policy);
+      await respond({
+        response_type: "ephemeral",
+        text: contacts.length
+          ? contacts
+              .map(
+                (contact) =>
+                  `• ${this.aliasFor(contact) ?? contact.id} — ${contact.name}`,
+              )
+              .join("\n")
+          : "No A2A agents are configured for this channel.",
+      });
+      return;
+    }
+    if (action !== "start" || arguments_.length === 0) {
+      await respond({
+        response_type: "ephemeral",
+        text: this.nativeCommandHelp(),
+      });
+      return;
+    }
+
+    const [possibleAgent, ...remainingRequest] = arguments_;
+    const explicitlySelected = possibleAgent
+      ? await this.availableContact(possibleAgent, policy)
+      : undefined;
+    const contact =
+      explicitlySelected ??
+      (await this.selectedContact(
+        { platform: "slack", kind: "thread", id: command.channel_id },
+        policy,
+      ));
+    const request = (explicitlySelected ? remainingRequest : arguments_).join(
+      " ",
+    );
+    if (!contact) {
+      await respond({
+        response_type: "ephemeral",
+        text: "No default A2A agent is configured. Use `/a2a agents` to see available agents.",
+      });
+      return;
+    }
+    if (!request) {
+      await respond({
+        response_type: "ephemeral",
+        text: this.nativeCommandHelp(),
+      });
+      return;
+    }
+
+    const root = await client.chat.postMessage({
+      channel: command.channel_id,
+      text: `*A2A workspace — ${contact.name}*\nRequested by <@${command.user_id}>. Reply in this thread to collaborate.`,
+    });
+    if (!root.ts)
+      throw new Error("Slack did not return a workspace timestamp.");
+    const message: SlackMessage = {
+      channel: command.channel_id,
+      threadTs: root.ts,
+      user: command.user_id,
+      text: request,
+      policy,
+      surface: {
+        platform: "slack",
+        kind: "thread",
+        id: `${command.channel_id}:${root.ts}`,
+      },
+    };
+    this.selectedContactBySurface.set(surfaceKey(message.surface), contact.id);
+    await respond({
+      response_type: "ephemeral",
+      text: `Started a ${contact.name} workspace thread.`,
+    });
+    await this.handle(message, client);
+  }
+
+  private nativeCommandHelp(): string {
+    return "Commands: `/a2a start [agent] <request>` starts a workspace thread; `/a2a agents` lists agents. Use `@A2ABridge /a2a …` for controls inside an active thread.";
   }
 
   private async handle(

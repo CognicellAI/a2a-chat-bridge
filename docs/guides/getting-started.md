@@ -70,12 +70,15 @@ the Contact or Session; all participants can invoke the agent and inspect Tasks.
 ## Optional: connect Slack
 
 Enable Socket Mode in the Slack app, create an app-level token with
-`connections:write`, and add `app_mentions:read`, `im:history`, and `chat:write`
-to the bot. Store the resulting tokens in `.env`, then add the `slack` block
-from the [configuration reference](configuration.md#slack-socket-mode).
+`connections:write`, and add `app_mentions:read`, `im:history`, `chat:write`,
+and `commands` to the bot. Import the supplied
+[`slack-app-manifest.yaml`](slack-app-manifest.yaml) or register `/a2a`, then
+reinstall the app. Store the resulting tokens in `.env`, then add the `slack`
+block from the [configuration reference](configuration.md#slack-socket-mode).
 
-Slack DMs accept ordinary text. In an allowlisted Slack channel thread, mention
-the bot to invoke the agent; use `@Bridge /a2a …` for controls. Slack native
+Slack DMs accept ordinary text. In an allowlisted Slack channel, use
+`/a2a start [agent] <request>` to create an agent workspace thread. Mention the
+bot there to invoke the agent; use `@Bridge /a2a …` for controls. Slack native
 slash commands cannot run in message threads.
 
 ## Next steps

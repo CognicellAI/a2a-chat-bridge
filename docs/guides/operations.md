@@ -38,10 +38,11 @@ Root channels, private threads, and unmentioned thread messages are ignored.
 ## Slack
 
 Slack DMs follow the same Contact, Session, and Task workflow using text
-controls such as `/a2a contact list`. In an eligible Slack thread, prefix both
-agent requests and controls with a bot mention: `@Bridge request` or
-`@Bridge /a2a contact list`. Only the channel policy's `mutators` may change a
-shared Slack thread's Contact or Session.
+controls such as `/a2a contact list`. In an eligible Slack channel,
+`/a2a agents` lists permitted agents and `/a2a start [agent] <request>` creates
+a shared workspace thread. In that thread, prefix agent requests and controls
+with a bot mention: `@Bridge request` or `@Bridge /a2a contact list`. Only the
+channel policy's `mutators` may change a shared Slack thread's Contact or Session.
 
 ## Run and check health
 

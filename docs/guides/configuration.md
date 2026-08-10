@@ -96,8 +96,9 @@ For Docker, Compose mounts local `config.yaml` read-only at `/app/config.yaml`.
 
 Slack is optional. It uses `SLACK_BOT_TOKEN` plus a separate Socket Mode
 `SLACK_APP_TOKEN`; keep both in `.env`, never in this file. Slack DMs accept
-ordinary text. In an allowlisted Slack channel thread, mention the bot for an
-agent request or send `@Bridge /a2a …` for controls.
+ordinary text. In an allowlisted Slack channel, `/a2a start [agent] <request>`
+creates a shared workspace thread. In that thread, mention the bot for an agent
+request or send `@Bridge /a2a …` for controls.
 
 ```yaml
 slack:
@@ -112,5 +113,11 @@ slack:
 
 `mutators` is required and contains Slack user IDs allowed to change a shared
 thread's Contact or Session. All thread participants may invoke and inspect the
-selected agent. Configure Slack with `app_mentions:read`, `im:history`, and
-`chat:write`; Socket Mode requires an app token with `connections:write`.
+selected agent. Configure Slack with `app_mentions:read`, `im:history`,
+`chat:write`, and `commands`; Socket Mode requires an app token with
+`connections:write`. Import [`slack-app-manifest.yaml`](slack-app-manifest.yaml)
+or register `/a2a` in the Slack app settings, then reinstall the app.
+
+Use `/a2a start [agent] <request>` to create a workspace thread. Mention the bot
+there to send work to its shared Session. All participants can invoke the agent
+and inspect Tasks; only `mutators` can change its Contact or Session.

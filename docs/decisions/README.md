@@ -33,3 +33,4 @@ Rules:
 | [0012](0012-thread-workspace-introduction.md)          | Thread workspace introduction                     | accepted   | 2026-08-09 |
 | [0013](0013-public-v0-release-governance.md)           | Public v0.1.0 release governance                  | accepted   | 2026-08-09 |
 | [0014](0014-slack-socket-mode-adapter.md)              | Slack Socket Mode adapter                         | accepted   | 2026-08-10 |
+| [0015](0015-native-slack-command-launcher.md)          | Native Slack command launcher                     | accepted   | 2026-08-10 |

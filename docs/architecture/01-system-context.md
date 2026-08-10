@@ -14,7 +14,7 @@ C4Context
     System(bridge, "a2a-chat-bridge", "Self-hosted, single-tenant A2A client. CPE — a handset, not a switchboard.")
 
     System_Ext(discord, "Discord", "Chat platform: DMs and allowlisted public threads")
-    System_Ext(slack, "Slack", "Chat platform: DMs and allowlisted mention-gated threads")
+    System_Ext(slack, "Slack", "Chat platform: DMs, /a2a workspace launch, and allowlisted mention-gated threads")
     System_Ext(agentA, "Remote Agent A", "A2A Server (opaque) — JSON-RPC binding")
     System_Ext(agentB, "Remote Agent B", "A2A Server (opaque) — REST binding")
 
