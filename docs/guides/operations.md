@@ -46,13 +46,13 @@ Use `/a2a task status <task>` to refresh a recorded Task directly.
 
 ## Troubleshooting
 
-| Symptom                               | Action                                                                                                                        |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Bridge will not start                 | Validate `config.yaml`, required token environment variables, and file access to `stateFile`.                                 |
-| Agent request fails                   | Use `/a2a agent current`, then verify the exact Agent Card URL, configured auth mode, and remote-agent logs.                  |
-| Context appears reset                 | Confirm that the configured `stateFile` or Docker named volume persists across restarts.                                      |
-| No commands or replies on one adapter | Follow its adapter-specific checks: [Discord](discord/README.md#troubleshooting) or [Slack](slack/README.md#troubleshooting). |
-| Task recovery unavailable             | The remote agent does not implement optional resubscription. Use `/a2a task status` for a direct refresh.                     |
+| Symptom                               | Action                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Bridge will not start                 | Validate `config.yaml`, required token environment variables, and file access to `stateFile`.                                         |
+| Agent request fails                   | Use `/a2a agent current`, then verify the exact Agent Card URL, configured auth mode, and remote-agent logs.                          |
+| Context appears reset                 | Confirm that the configured `stateFile` or Docker named volume persists across restarts.                                              |
+| No commands or replies on one adapter | Follow its adapter-specific checks: [Discord](discord/workspaces.md#troubleshooting) or [Slack](slack/workspaces.md#troubleshooting). |
+| Task recovery unavailable             | The remote agent does not implement optional resubscription. Use `/a2a task status` for a direct refresh.                             |
 
 Never paste `config.yaml`, bot tokens, app tokens, access tokens, or client
 secrets into chat or logs.
@@ -61,5 +61,5 @@ secrets into chat or logs.
 
 - [Get started](getting-started.md)
 - [Configuration reference](configuration.md)
-- [Discord integration and usage](discord/README.md)
-- [Slack integration and usage](slack/README.md)
+- [Discord adapter](discord/README.md)
+- [Slack adapter](slack/README.md)

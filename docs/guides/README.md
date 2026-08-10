@@ -13,10 +13,10 @@ Slack retain control of membership and administration.
 1. [Get started](getting-started.md) — install the bridge, configure your first
    agent, start the service, and choose an adapter.
 2. Connect the adapter you use:
-   - [Discord](discord/README.md) — bot installation, channel policies, DMs, and
-     thread workspaces.
-   - [Slack](slack/README.md) — app manifest, Socket Mode, workspace launch, and Block
-     Kit controls.
+   - [Discord](discord/README.md) — choose a chat type, then follow setup and
+     workspace-use guidance.
+   - [Slack](slack/README.md) — choose a chat type, then follow setup and
+     workspace-use guidance.
 3. [Command reference](commands.md) — the shared `/a2a` agent, session, and
    task commands.
 
@@ -30,7 +30,7 @@ Slack retain control of membership and administration.
 
 ## Future adapters
 
-Each adapter gets one guide that covers its platform-native installation,
-permissions, launch surface, message-routing rules, and troubleshooting. It
-links to this hub, the shared [command reference](commands.md), configuration,
-and operations pages instead of duplicating those concepts.
+Each adapter gets a small guide hub with a stable `README.md`, plus `setup.md`
+and `workspaces.md` pages. The hub links to this page, the shared [command
+reference](commands.md), configuration, and operations pages instead of
+duplicating shared concepts.
