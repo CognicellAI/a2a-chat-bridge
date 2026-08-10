@@ -67,6 +67,17 @@ Create a public thread below that channel. Mention the bot to send work to its
 shared Session. The thread starter or a member with `Manage Threads` may change
 the Contact or Session; all participants can invoke the agent and inspect Tasks.
 
+## Optional: connect Slack
+
+Enable Socket Mode in the Slack app, create an app-level token with
+`connections:write`, and add `app_mentions:read`, `im:history`, and `chat:write`
+to the bot. Store the resulting tokens in `.env`, then add the `slack` block
+from the [configuration reference](configuration.md#slack-socket-mode).
+
+Slack DMs accept ordinary text. In an allowlisted Slack channel thread, mention
+the bot to invoke the agent; use `@Bridge /a2a …` for controls. Slack native
+slash commands cannot run in message threads.
+
 ## Next steps
 
 - [Configuration reference](configuration.md) — every setting and auth mode.

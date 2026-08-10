@@ -1,12 +1,12 @@
 # Proposal: Slack adapter
 
-- **Status**: draft
+- **Status**: implemented
 - **Author**: Herman Haggerty
 - **Created**: 2026-08-09
 - **Shaping**: [frame](frame.md), [working shape](shaping.md)
 - **Research**: [Slack transport notes](research.md),
   [Slack configuration](research-slack-config.md)
-- **ADR(s)**: —
+- **ADR(s)**: [0014](../../decisions/0014-slack-socket-mode-adapter.md)
 
 ## Problem
 

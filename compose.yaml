@@ -4,6 +4,8 @@ services:
       context: .
     environment:
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN:-}
       A2A_CHAT_BRIDGE_CONFIG: /app/config.yaml
     volumes:
       - bridge-state:/data

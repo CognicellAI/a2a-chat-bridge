@@ -3,7 +3,8 @@
 A self-hosted, single-tenant Discord client for remote A2A v1.0 agents. It is a
 handset: Contacts are explicitly configured by exact Agent Card URL and no agent
 is auto-routed or hosted by this application. It supports DMs and shared public
-thread workspaces below operator-allowlisted parent channels.
+thread workspaces below operator-allowlisted parent channels. It also supports
+Slack DMs and mention-gated, allowlisted Slack threads through Socket Mode.
 
 Maintained by [CognicellAI](https://cognicellai.com/) and released under the
 [Apache-2.0 License](LICENSE).
@@ -48,7 +49,7 @@ to 2,000 characters.
 `bun run format`, `bun run typecheck`, `bun test`, and `bun run build`.
 
 `bun run build` produces `dist/a2a-chat-bridge`. No inbound port, webhooks,
-artifact uploads, Slack adapter, private-thread support, or per-user auth are
+artifact uploads, private-channel support, Slack Connect, or per-user auth are
 included in v1.
 
 ## Contributing and security

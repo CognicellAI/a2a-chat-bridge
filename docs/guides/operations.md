@@ -35,6 +35,14 @@ with the Agent, Session ID, and the bot mention to use.
 
 Root channels, private threads, and unmentioned thread messages are ignored.
 
+## Slack
+
+Slack DMs follow the same Contact, Session, and Task workflow using text
+controls such as `/a2a contact list`. In an eligible Slack thread, prefix both
+agent requests and controls with a bot mention: `@Bridge request` or
+`@Bridge /a2a contact list`. Only the channel policy's `mutators` may change a
+shared Slack thread's Contact or Session.
+
 ## Run and check health
 
 ```sh

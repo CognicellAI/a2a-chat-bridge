@@ -9,7 +9,7 @@ export interface Contact {
 }
 
 export interface Surface {
-  platform: "discord";
+  platform: "discord" | "slack";
   kind: "dm" | "thread";
   id: string;
 }

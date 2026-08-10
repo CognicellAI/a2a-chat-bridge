@@ -35,6 +35,13 @@ export interface DiscordConfig {
   channels: readonly ChannelPolicy[];
 }
 
+export interface SlackConfig {
+  botTokenEnv: string;
+  appTokenEnv: string;
+  /** Shared Slack workspaces, scoped to their channel and configured agents. */
+  channels: readonly SlackChannelPolicy[];
+}
+
 export interface ChannelPolicy {
   id: string;
   /** Configured Agent aliases available in public threads below this parent. */
@@ -43,8 +50,14 @@ export interface ChannelPolicy {
   defaultAgent?: string;
 }
 
+export interface SlackChannelPolicy extends ChannelPolicy {
+  /** Slack user IDs allowed to change a shared thread's Contact or Session. */
+  mutators: readonly string[];
+}
+
 export interface Config {
-  discord: DiscordConfig;
+  discord?: DiscordConfig;
+  slack?: SlackConfig;
   stateFile: string;
   editIntervalMs: number;
   pollIntervalMs: number;
@@ -72,6 +85,7 @@ type RawAuthConfig = RawOAuthConfig;
 
 interface RawConfig {
   discord?: { tokenEnv?: unknown; channels?: unknown };
+  slack?: { botTokenEnv?: unknown; appTokenEnv?: unknown; channels?: unknown };
   stateFile?: unknown;
   editIntervalMs?: unknown;
   pollIntervalMs?: unknown;
@@ -158,6 +172,25 @@ const channelPolicy = (raw: unknown, index: number): ChannelPolicy => {
   return Object.freeze({ id: candidate.id, agents, defaultAgent });
 };
 
+const slackChannelPolicy = (
+  raw: unknown,
+  index: number,
+): SlackChannelPolicy => {
+  const base = channelPolicy(raw, index);
+  const candidate = raw as { mutators?: unknown };
+  const mutators = stringList(
+    candidate.mutators,
+    `config.slack.channels[${index}].mutators`,
+  );
+  if (!mutators.length)
+    throw new Error(
+      `config.slack.channels[${index}].mutators must not be empty.`,
+    );
+  if (new Set(mutators).size !== mutators.length)
+    throw new Error(`config.slack.channels[${index}].mutators has duplicates.`);
+  return Object.freeze({ ...base, mutators });
+};
+
 const agent = (raw: unknown, index: number): ConfiguredAgent => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
     throw new Error(`agents[${index}] must be a mapping.`);
@@ -222,8 +255,22 @@ export async function loadConfig(
       "config.discord.threadParentChannelIds is unsupported. Use config.discord.channels instead.",
     );
   const tokenEnv = parsed.discord?.tokenEnv;
-  if (typeof tokenEnv !== "string" || !tokenEnv)
+  if (parsed.discord && (typeof tokenEnv !== "string" || !tokenEnv))
     throw new Error("config.discord.tokenEnv is required.");
+  const slackBotTokenEnv = parsed.slack?.botTokenEnv;
+  const slackAppTokenEnv = parsed.slack?.appTokenEnv;
+  if (
+    parsed.slack &&
+    (typeof slackBotTokenEnv !== "string" ||
+      !slackBotTokenEnv ||
+      typeof slackAppTokenEnv !== "string" ||
+      !slackAppTokenEnv)
+  )
+    throw new Error(
+      "config.slack.botTokenEnv and config.slack.appTokenEnv are required.",
+    );
+  if (!parsed.discord && !parsed.slack)
+    throw new Error("Configure at least one chat platform: discord or slack.");
   const stateFile = parsed.stateFile ?? "./data/state.json";
   if (typeof stateFile !== "string" || !stateFile)
     throw new Error("stateFile must be a non-empty string.");
@@ -237,6 +284,14 @@ export async function loadConfig(
     throw new Error("config.discord.channels must be a list.");
   const channels = Object.freeze(
     (parsed.discord?.channels ?? []).map(channelPolicy),
+  );
+  if (
+    parsed.slack?.channels !== undefined &&
+    !Array.isArray(parsed.slack.channels)
+  )
+    throw new Error("config.slack.channels must be a list.");
+  const slackChannels = Object.freeze(
+    (parsed.slack?.channels ?? []).map(slackChannelPolicy),
   );
   const duplicate = agents.find(
     (configured, index) =>
@@ -264,13 +319,30 @@ export async function loadConfig(
         throw new Error(
           `config.discord.channels entry ${channel.id} references unknown Agent alias ${alias}.`,
         );
+  for (const channel of slackChannels)
+    for (const alias of channel.agents)
+      if (!configuredAliases.has(alias))
+        throw new Error(
+          `config.slack.channels entry ${channel.id} references unknown Agent alias ${alias}.`,
+        );
   if (new Set(channels.map((channel) => channel.id)).size !== channels.length)
     throw new Error("config.discord.channels contains duplicate IDs.");
+  if (
+    new Set(slackChannels.map((channel) => channel.id)).size !==
+    slackChannels.length
+  )
+    throw new Error("config.slack.channels contains duplicate IDs.");
   return Object.freeze({
-    discord: Object.freeze({
-      tokenEnv,
-      channels,
-    }),
+    discord: parsed.discord
+      ? Object.freeze({ tokenEnv: tokenEnv as string, channels })
+      : undefined,
+    slack: parsed.slack
+      ? Object.freeze({
+          botTokenEnv: slackBotTokenEnv as string,
+          appTokenEnv: slackAppTokenEnv as string,
+          channels: slackChannels,
+        })
+      : undefined,
     stateFile: resolve(stateFile),
     editIntervalMs: positiveNumber(
       parsed.editIntervalMs,

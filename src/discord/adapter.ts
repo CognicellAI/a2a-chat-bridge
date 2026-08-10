@@ -216,7 +216,9 @@ export class DiscordAdapter {
       return undefined;
     return this.runtimeConfig
       .snapshot()
-      .config.discord.channels.find((policy) => policy.id === channel.parentId);
+      .config.discord?.channels.find(
+        (policy) => policy.id === channel.parentId,
+      );
   }
 
   private isEligibleThread(channel: BaseChannel): channel is AnyThreadChannel {

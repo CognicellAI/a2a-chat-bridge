@@ -7,6 +7,10 @@
 discord:
   tokenEnv: DISCORD_BOT_TOKEN
   channels: []
+slack:
+  botTokenEnv: SLACK_BOT_TOKEN
+  appTokenEnv: SLACK_APP_TOKEN
+  channels: []
 stateFile: ./data/state.json
 
 agents:
@@ -87,3 +91,26 @@ The state file is rebuildable metadata only. Removing it forgets local Contacts,
 Sessions, and Task records; it does not cancel remote A2A work.
 
 For Docker, Compose mounts local `config.yaml` read-only at `/app/config.yaml`.
+
+## Slack Socket Mode
+
+Slack is optional. It uses `SLACK_BOT_TOKEN` plus a separate Socket Mode
+`SLACK_APP_TOKEN`; keep both in `.env`, never in this file. Slack DMs accept
+ordinary text. In an allowlisted Slack channel thread, mention the bot for an
+agent request or send `@Bridge /a2a …` for controls.
+
+```yaml
+slack:
+  botTokenEnv: SLACK_BOT_TOKEN
+  appTokenEnv: SLACK_APP_TOKEN
+  channels:
+    - id: C0123456789
+      agents: [concierge]
+      defaultAgent: concierge
+      mutators: [U0123456789]
+```
+
+`mutators` is required and contains Slack user IDs allowed to change a shared
+thread's Contact or Session. All thread participants may invoke and inspect the
+selected agent. Configure Slack with `app_mentions:read`, `im:history`, and
+`chat:write`; Socket Mode requires an app token with `connections:write`.

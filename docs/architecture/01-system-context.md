@@ -1,6 +1,6 @@
 # 01 — System Context
 
-C4 Level 1: a2a-chat-bridge in its environment — the user, Discord, and the
+C4 Level 1: a2a-chat-bridge in its environment — the user, Discord, Slack, and the
 remote A2A agents it talks to. Remote agents are opaque A2A Servers, described by
 what their Agent Card advertises. The operator declares Contacts in local
 configuration by exact Agent Card URL; the bridge never auto-routes traffic.
@@ -14,11 +14,13 @@ C4Context
     System(bridge, "a2a-chat-bridge", "Self-hosted, single-tenant A2A client. CPE — a handset, not a switchboard.")
 
     System_Ext(discord, "Discord", "Chat platform: DMs and allowlisted public threads")
+    System_Ext(slack, "Slack", "Chat platform: DMs and allowlisted mention-gated threads")
     System_Ext(agentA, "Remote Agent A", "A2A Server (opaque) — JSON-RPC binding")
     System_Ext(agentB, "Remote Agent B", "A2A Server (opaque) — REST binding")
 
     Rel(user, discord, "Chats")
     Rel(discord, bridge, "Gateway events", "outbound WebSocket")
+    Rel(slack, bridge, "Socket Mode events", "outbound WebSocket")
     Rel(bridge, agentA, "SendStreamingMessage, SendMessage, GetTask", "A2A v1.0 JSON-RPC over HTTPS")
     Rel(bridge, agentB, "SendStreamingMessage, SendMessage, GetTask", "A2A v1.0 REST over HTTPS")
 ```
@@ -39,7 +41,7 @@ supplied URL verbatim and caches the card.
 ## Context
 
 a2a-chat-bridge lets a workspace owner and their invited collaborators talk to
-any A2A v1.0 agent from Discord without giving any third party a position in the
+any A2A v1.0 agent from Discord or Slack without giving any third party a position in the
 traffic path. A public thread can be a shared agent workspace only when its
 parent is allowlisted; otherwise the bridge remains DM-first. Motivation and
 trade-offs:

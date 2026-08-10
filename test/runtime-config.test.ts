@@ -84,6 +84,24 @@ describe("Runtime configuration", () => {
     });
   });
 
+  it("accepts a Slack Socket Mode policy with explicit thread mutators", async () => {
+    directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
+    const file = join(directory, "config.yaml");
+    await writeFile(
+      file,
+      "slack:\n  botTokenEnv: SLACK_BOT_TOKEN\n  appTokenEnv: SLACK_APP_TOKEN\n  channels:\n    - id: C0123456789\n      agents: [concierge]\n      defaultAgent: concierge\n      mutators: [U0123456789]\nstateFile: ./data/state.json\nagents:\n  - agentCardUrl: https://agent.example/.well-known/agent-card.json\n    alias: concierge\n",
+    );
+
+    await expect(loadConfig(file)).resolves.toMatchObject({
+      discord: undefined,
+      slack: {
+        botTokenEnv: "SLACK_BOT_TOKEN",
+        appTokenEnv: "SLACK_APP_TOKEN",
+        channels: [{ id: "C0123456789", mutators: ["U0123456789"] }],
+      },
+    });
+  });
+
   it("rejects a channel policy that names an unknown Agent alias", async () => {
     directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
     const file = join(directory, "config.yaml");
@@ -123,7 +141,7 @@ describe("Runtime configuration", () => {
 
     await writeFile(file, "agents: not-a-list\n");
     await expect(runtime.reload()).rejects.toThrow(
-      "config.discord.tokenEnv is required",
+      "Configure at least one chat platform",
     );
     expect(runtime.snapshot().revision).toBe(3);
     expect(runtime.snapshot().config.managesContacts).toBe(true);
