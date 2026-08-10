@@ -99,16 +99,17 @@ export class SlackAdapter {
     event: SlackEvent,
     client: App["client"],
   ): Promise<void> {
-    if (
-      !event.user ||
-      event.bot_id ||
-      event.subtype ||
-      !event.text ||
-      !event.thread_ts
-    )
-      return;
+    if (!event.user || event.bot_id || event.subtype || !event.text) return;
     const policy = this.policy(event.channel);
     if (!policy) return;
+    if (!event.thread_ts) {
+      await client.chat.postMessage({
+        channel: event.channel,
+        thread_ts: event.ts,
+        text: "A2A conversations run in a Slack thread. Reply here in a thread, then mention @A2ABridge.",
+      });
+      return;
+    }
     const text = event.text.replace(/<@[^>]+>/g, "").trim();
     if (!text) return;
     await this.handle(
