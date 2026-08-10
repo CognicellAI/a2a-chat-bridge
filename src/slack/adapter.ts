@@ -771,12 +771,6 @@ export class SlackAdapter {
             value: threadTs,
             text: { type: "plain_text", text: "Sessions" },
           },
-          {
-            type: "button",
-            action_id: "a2a_session_list",
-            value: threadTs,
-            text: { type: "plain_text", text: "Sessions" },
-          },
         ],
       },
       {
