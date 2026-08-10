@@ -4,6 +4,6 @@ set -eu
 # Docker creates named volumes as root. Initialize only the local, rebuildable
 # soft-state volume, then run the bridge without root privileges.
 mkdir -p /data
-chown -R bun:bun /data
+chown -R node:node /data
 
-exec su bun -s /bin/sh -c 'exec bun run src/index.ts'
+exec su node -s /bin/sh -c 'exec node /app/dist/index.js'
