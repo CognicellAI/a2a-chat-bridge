@@ -53,6 +53,29 @@ If only one agent is configured, it is selected automatically. Send ordinary
 text to start or continue the A2A conversation. Use the [command reference](../commands.md)
 to inspect Sessions, Context IDs, and Tasks.
 
+## Chat types
+
+| Chat type                                          | Support                           | How to use it                                                                                       |
+| -------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Bot direct message                                 | Supported                         | Use every native `/a2a` command or send ordinary text. This is a private Agent and Session surface. |
+| Public or private parent channel                   | Supported as a workspace launcher | Use `/a2a session new ...` to create a shared workspace thread.                                     |
+| Public or private thread below a configured parent | Supported                         | Mention `@A2ABridge` to send a request. Native commands inspect or change workspace state.          |
+| Group direct message                               | Unsupported                       | Discord bots cannot be added to group direct messages.                                              |
+
+Examples:
+
+```text
+Bot direct message
+/a2a agent use concierge
+Draft a customer onboarding workflow.
+
+Configured parent channel
+/a2a session new researcher Compare three deployment options
+
+Created workspace thread
+@A2ABridge Turn that comparison into a decision memo.
+```
+
 ## 4. Enable a shared thread workspace
 
 Configure the **parent text-channel ID**, not a thread ID. The `agents` list is

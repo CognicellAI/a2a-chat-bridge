@@ -42,7 +42,12 @@ slack:
   botTokenEnv: SLACK_BOT_TOKEN
   appTokenEnv: SLACK_APP_TOKEN
   conversations:
+    # A public or private channel
     - id: C0123456789
+      agents: [concierge, researcher]
+      defaultAgent: concierge
+    # A group direct message
+    - id: G0123456789
       agents: [concierge, researcher]
       defaultAgent: concierge
 ```
@@ -53,6 +58,34 @@ start the bridge. Confirm this startup log:
 
 ```text
 Connected to Slack through Socket Mode.
+```
+
+## Chat types
+
+| Chat type                         | Support                           | How to use it                                                                                          |
+| --------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1:1 direct message                | Supported                         | Use every native `/a2a` command or send ordinary text. No conversation-policy entry is needed.         |
+| Group direct message              | Supported when configured         | Add the group-DM ID to `slack.conversations`. Participants share the selected agent and Session.       |
+| Public or private channel         | Supported as a workspace launcher | Add the channel ID to `slack.conversations`, invite the app, then use native `/a2a session new ...`.   |
+| Thread below a configured channel | Supported                         | Use the workspace header or `@A2ABridge /a2a ...` for controls; mention the bot for ordinary requests. |
+| Slack Connect conversation        | Unsupported                       | Keep A2A workspaces in conversations owned by the configured Slack workspace.                          |
+
+Examples:
+
+```text
+1:1 direct message
+/a2a agent use concierge
+Draft a customer onboarding plan.
+
+Configured group direct message
+/a2a session new researcher Compare the two approaches
+Turn that into a decision.
+
+Configured channel
+/a2a session new concierge Prepare a release checklist
+
+Created workspace thread
+@A2ABridge Assign owners to the checklist.
 ```
 
 ## 4. Use a direct message
