@@ -7,6 +7,17 @@ Complete [Get started](../getting-started.md) first. Socket Mode connects Slack
 to the self-hosted bridge over WebSockets, so this deployment needs no public
 HTTP endpoint.
 
+## Contents
+
+- [Import the app manifest](#1-import-the-app-manifest)
+- [Create and store Slack tokens](#2-create-and-store-slack-tokens)
+- [Configure the adapter](#3-configure-the-adapter)
+- [Chat types](#chat-types)
+- [Use a direct message](#4-use-a-direct-message)
+- [Launch and use a shared workspace](#5-launch-and-use-a-shared-workspace)
+- [Slack behavior and limits](#slack-behavior-and-limits)
+- [Troubleshooting](#troubleshooting)
+
 ## 1. Import the app manifest
 
 1. Open your app in [Slack API Apps](https://api.slack.com/apps).

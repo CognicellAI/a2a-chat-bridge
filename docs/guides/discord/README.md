@@ -6,6 +6,16 @@ bridge.
 Complete [Get started](../getting-started.md) first. This guide covers Discord's
 native application-command and thread-workspace experience.
 
+## Contents
+
+- [Create and install the Discord app](#1-create-and-install-the-discord-app)
+- [Configure the adapter](#2-configure-the-adapter)
+- [Use a direct message](#3-use-a-direct-message)
+- [Chat types](#chat-types)
+- [Enable a shared thread workspace](#4-enable-a-shared-thread-workspace)
+- [Discord behavior and limits](#discord-behavior-and-limits)
+- [Troubleshooting](#troubleshooting)
+
 ## 1. Create and install the Discord app
 
 1. Create an application and bot in the [Discord Developer Portal](https://discord.com/developers/applications).
