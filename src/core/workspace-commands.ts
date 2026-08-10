@@ -8,9 +8,14 @@ export type WorkspaceCommand =
   | { readonly group: "agent"; readonly action: "list" | "current" }
   | { readonly group: "agent"; readonly action: "use"; readonly agent: string }
   | {
+      readonly group: "workspace";
+      readonly action: "start";
+      readonly arguments: readonly string[];
+    }
+  | {
       readonly group: "session";
       readonly action: "new";
-      readonly arguments: readonly string[];
+      readonly agent?: string;
     }
   | { readonly group: "session"; readonly action: "current" | "list" }
   | {
@@ -89,9 +94,14 @@ export const parseWorkspaceCommand = (
     if (action === "use" && argument) return { group, action, agent: argument };
     return undefined;
   }
-  if (group === "session") {
-    if (action === "new")
+  if (group === "workspace") {
+    if (action === "start")
       return { group, action, arguments: [argument, ...rest].filter(Boolean) };
+    return undefined;
+  }
+  if (group === "session") {
+    if (action === "new" && rest.length === 0)
+      return { group, action, agent: argument };
     if (action === "current" || action === "list") return { group, action };
     if (action === "use" && argument)
       return { group, action, session: argument };
@@ -106,7 +116,7 @@ export const parseWorkspaceCommand = (
 };
 
 export const commandHelp =
-  "Commands: `/a2a agent list|current|use <agent>`, `/a2a session new [agent] [request]|current|list|use <session>`, `/a2a task current|list|status <task>`.";
+  "Commands: `/a2a agent list|current|use <agent>`, `/a2a workspace start [agent] [request]`, `/a2a session new [agent]|current|list|use <session>`, `/a2a task current|list|status <task>`.";
 
 export class WorkspaceCommands {
   private readonly selectedAgentBySurface = new Map<string, string>();
@@ -122,6 +132,8 @@ export class WorkspaceCommands {
     scope: CommandScope,
   ): Promise<CommandResult> {
     if (command.group === "agent") return this.executeAgent(command, scope);
+    if (command.group === "workspace")
+      return this.executeWorkspaceStart(command, scope);
     if (command.group === "session") return this.executeSession(command, scope);
     return this.executeTask(command, scope);
   }
@@ -200,10 +212,7 @@ export class WorkspaceCommands {
     scope: CommandScope,
   ): Promise<CommandResult> {
     if (command.action === "new") {
-      const { agent, initialRequest } = await this.resolveNewSessionAgent(
-        command.arguments,
-        scope,
-      );
+      const agent = await this.resolveNewSessionAgent(command.agent, scope);
       if (!agent)
         return {
           kind: "error",
@@ -215,7 +224,7 @@ export class WorkspaceCommands {
         scope.surface,
       );
       const session = await this.createSession(agent, scope.surface);
-      return { kind: "session-new", agent, session, previous, initialRequest };
+      return { kind: "session-new", agent, session, previous };
     }
     const agent = await this.selectedAgent(scope);
     if (!agent)
@@ -255,6 +264,25 @@ export class WorkspaceCommands {
       };
     await this.state.selectSession(agent.id, scope.surface, session.id);
     return { kind: "session-selected", agent, session };
+  }
+
+  private async executeWorkspaceStart(
+    command: Extract<WorkspaceCommand, { group: "workspace" }>,
+    scope: CommandScope,
+  ): Promise<CommandResult> {
+    const { agent, initialRequest } = await this.resolveWorkspaceStart(
+      command.arguments,
+      scope,
+    );
+    if (!agent)
+      return {
+        kind: "error",
+        message:
+          "No A2A agent is selected. Run `/a2a agent list`, then `/a2a agent use <agent>`.",
+      };
+    const previous = await this.state.getActiveSession(agent.id, scope.surface);
+    const session = await this.createSession(agent, scope.surface);
+    return { kind: "session-new", agent, session, previous, initialRequest };
   }
 
   private async executeTask(
@@ -311,6 +339,19 @@ export class WorkspaceCommands {
   }
 
   private async resolveNewSessionAgent(
+    identifier: string | undefined,
+    scope: CommandScope,
+  ): Promise<Contact | undefined> {
+    if (!identifier) return this.selectedAgent(scope);
+    const candidate = await this.availableAgent(identifier, scope);
+    if (candidate) {
+      this.selectedAgentBySurface.set(surfaceKey(scope.surface), candidate.id);
+      return candidate;
+    }
+    return undefined;
+  }
+
+  private async resolveWorkspaceStart(
     arguments_: readonly string[],
     scope: CommandScope,
   ): Promise<{ agent?: Contact; initialRequest?: string }> {

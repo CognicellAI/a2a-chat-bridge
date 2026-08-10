@@ -13,7 +13,7 @@ without a public HTTP endpoint.
 | --------------------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
 | 1:1 direct message                | Supported when configured | Open a DM with the app and use `/a2a` or ordinary text.                             |
 | Group direct message              | Supported when configured | Add its conversation ID to policy, then use `/a2a` or ordinary text.                |
-| Public or private channel         | Supported as a launcher   | Add it to policy, invite the app, then run `/a2a session new ...`.                  |
+| Public or private channel         | Supported as a launcher   | Add it to policy, invite the app, then run `/a2a workspace start ...`.              |
 | Thread below a configured channel | Supported                 | Mention `@A2ABridge` to request work; use the header or text commands for controls. |
 | Slack Connect conversation        | Unsupported               | Use a conversation owned by the configured workspace.                               |
 
@@ -33,7 +33,7 @@ without a public HTTP endpoint.
 For a shared workspace, use an allowlisted Slack channel:
 
 ```text
-/a2a session new concierge Prepare a release checklist
+/a2a workspace start concierge Prepare a release checklist
 ```
 
 The bridge opens a Slack thread and posts a workspace header. In that thread:

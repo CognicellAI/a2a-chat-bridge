@@ -34,6 +34,8 @@ Rules:
 | [0013](0013-public-v0-release-governance.md)           | Public v0.1.0 release governance                  | accepted   | 2026-08-09 |
 | [0014](0014-slack-socket-mode-adapter.md)              | Slack Socket Mode adapter                         | superseded | 2026-08-10 |
 | [0015](0015-native-slack-command-launcher.md)          | Native Slack command launcher                     | accepted   | 2026-08-10 |
-| [0016](0016-cross-platform-command-parity.md)          | Cross-platform command parity                     | accepted   | 2026-08-10 |
+| [0016](0016-cross-platform-command-parity.md)          | Cross-platform command parity                     | superseded | 2026-08-10 |
 | [0017](0017-native-platform-collaboration.md)          | Native-platform collaboration                     | accepted   | 2026-08-10 |
-| [0018](0018-conversation-surface-coverage.md)          | Conversation-surface coverage                     | accepted   | 2026-08-10 |
+| [0018](0018-conversation-surface-coverage.md)          | Conversation-surface coverage                     | superseded | 2026-08-10 |
+| [0019](0019-direct-message-agent-policy.md)            | Direct-message Agent policy                       | accepted   | 2026-08-10 |
+| [0020](0020-explicit-workspace-launch-command.md)      | Explicit workspace launch command                 | accepted   | 2026-08-10 |

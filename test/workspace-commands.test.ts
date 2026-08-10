@@ -35,8 +35,16 @@ const commandCases = [
     { group: "agent", action: "use", agent: "concierge" },
   ],
   [
-    "/a2a session new concierge hello",
-    { group: "session", action: "new", arguments: ["concierge", "hello"] },
+    "/a2a workspace start concierge hello",
+    {
+      group: "workspace",
+      action: "start",
+      arguments: ["concierge", "hello"],
+    },
+  ],
+  [
+    "/a2a session new concierge",
+    { group: "session", action: "new", agent: "concierge" },
   ],
   ["/a2a session current", { group: "session", action: "current" }],
   [
@@ -52,6 +60,12 @@ const commandCases = [
 describe("workspace command core", () => {
   it.each(commandCases)("parses %s", (text, expected) => {
     expect(parseWorkspaceCommand(text)).toEqual(expected);
+  });
+
+  it("keeps workspace launch arguments separate from a fresh Session", () => {
+    expect(parseWorkspaceCommand("/a2a session new concierge hello")).toBe(
+      undefined,
+    );
   });
 
   it("limits agents by policy while allowing participant workspace changes", async () => {
@@ -98,10 +112,7 @@ describe("workspace command core", () => {
       ),
     ).resolves.toMatchObject({ kind: "error" });
     await expect(
-      commands.execute(
-        { group: "session", action: "new", arguments: [] },
-        scope,
-      ),
+      commands.execute({ group: "session", action: "new" }, scope),
     ).resolves.toMatchObject({ kind: "session-new" });
   });
 
@@ -126,7 +137,7 @@ describe("workspace command core", () => {
       defaultAgent: "concierge",
     };
     const created = await commands.execute(
-      { group: "session", action: "new", arguments: ["concierge"] },
+      { group: "session", action: "new", agent: "concierge" },
       scope,
     );
     expect(created.kind).toBe("session-new");

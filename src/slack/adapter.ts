@@ -257,6 +257,13 @@ export class SlackAdapter {
       return;
     }
     if (kind === "dm" || kind === "group-dm") {
+      if (parsed.group === "workspace") {
+        await respond({
+          response_type: "ephemeral",
+          text: "Start a workspace from an allowlisted channel. In a direct conversation, use `/a2a session new [agent]`.",
+        });
+        return;
+      }
       const message: SlackMessage = {
         channel: command.channel_id,
         user: command.user_id,
@@ -314,10 +321,10 @@ export class SlackAdapter {
       });
       return;
     }
-    if (parsed.group !== "session" || parsed.action !== "new") {
+    if (parsed.group !== "workspace" || parsed.action !== "start") {
       await respond({
         response_type: "ephemeral",
-        text: "Slack native `/a2a` launches workspaces only. Open the workspace thread to inspect or change A2A state.",
+        text: "Use `/a2a workspace start [agent] [request]` in a configured channel. Open a workspace thread to inspect or change A2A state.",
       });
       return;
     }
@@ -398,7 +405,7 @@ export class SlackAdapter {
     let session = await this.state.getActiveSession(agent.id, message.surface);
     if (!session) {
       const created = await this.workspaceCommands.execute(
-        { group: "session", action: "new", arguments: [] },
+        { group: "session", action: "new" },
         scope,
       );
       if (created.kind !== "session-new") {
@@ -419,6 +426,14 @@ export class SlackAdapter {
     const parsed = parseWorkspaceCommand(message.text);
     if (!parsed) {
       await this.post(client, message, commandHelp);
+      return;
+    }
+    if (parsed.group === "workspace") {
+      await this.post(
+        client,
+        message,
+        "Start a workspace from an allowlisted parent channel with `/a2a workspace start [agent] [request]`.",
+      );
       return;
     }
     const result = await this.workspaceCommands.execute(
@@ -530,7 +545,7 @@ export class SlackAdapter {
             }
           : undefined;
       case "a2a_session_new":
-        return { group: "session", action: "new", arguments: [] };
+        return { group: "session", action: "new" };
       case "a2a_session_current":
         return { group: "session", action: "current" };
       case "a2a_session_list":

@@ -21,11 +21,12 @@ When exactly one agent is configured, the bridge selects it automatically.
 In an allowlisted parent channel, create a workspace:
 
 ```text
-/a2a session new concierge Draft a release checklist
+/a2a workspace start concierge Draft a release checklist
 ```
 
 The bridge creates a thread, posts the active agent and Session, and forwards
-the optional request. In the thread, mention the bot for ordinary requests:
+the optional request. In the thread, `session new` starts a fresh conversation
+without creating another thread. Mention the bot for ordinary requests:
 
 ```text
 @A2ABridge Turn that into owner-assigned tasks.

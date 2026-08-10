@@ -46,6 +46,11 @@ traffic path. A private bot DM can be an Agent workspace only when the operator
 enables the cross-adapter direct-message policy; a shared conversation requires
 its parent or group-DM conversation to be allowlisted. Discord group DMs and
 Slack Connect are explicitly unsupported.
+
+In an allowlisted parent channel, a participant starts the shared Surface with
+`/a2a workspace start`; the bridge creates the platform-native thread and its
+first Session. Within a DM, group DM, or existing workspace thread, `session`
+commands manage only that Surface's conversation state.
 Motivation and trade-offs:
 [proposal](../proposal/multi-platform-bridge/README.md),
 [ADR-0001](../decisions/0001-chat-bridge-as-cpe-mvp.md).

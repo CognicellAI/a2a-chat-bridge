@@ -17,8 +17,8 @@ Slack retain control of membership and administration.
      workspace-use guidance.
    - [Slack](slack/README.md) — choose a chat type, then follow setup and
      workspace-use guidance.
-3. [Command reference](commands.md) — the shared `/a2a` agent, session, and
-   task commands.
+3. [Command reference](commands.md) — the shared `/a2a` workspace, agent,
+   session, and task commands.
 
 ## Operator reference
 

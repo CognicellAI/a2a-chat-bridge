@@ -11,7 +11,7 @@ features:
   slash_commands:
     - command: /a2a
       description: Control an A2A agent workspace
-      usage_hint: agent list|use <agent> | session new [agent] [request]
+      usage_hint: workspace start [agent] [request] | session new [agent]
       should_escape: false
 oauth_config:
   scopes:

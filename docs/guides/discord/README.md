@@ -7,12 +7,12 @@ Complete [Get started](../getting-started.md) before connecting Discord.
 
 ## Choose a chat type
 
-| Where people collaborate         | Support                   | First action                                                       |
-| -------------------------------- | ------------------------- | ------------------------------------------------------------------ |
-| Bot direct message               | Supported when configured | Open a DM with the bot and use `/a2a` or ordinary text.            |
-| Public or private parent channel | Supported as a launcher   | Run `/a2a session new ...`; the bridge creates a workspace thread. |
-| Thread below a configured parent | Supported                 | Mention `@A2ABridge` to send requests.                             |
-| Group direct message             | Unsupported               | Discord bots cannot join group DMs.                                |
+| Where people collaborate         | Support                   | First action                                                           |
+| -------------------------------- | ------------------------- | ---------------------------------------------------------------------- |
+| Bot direct message               | Supported when configured | Open a DM with the bot and use `/a2a` or ordinary text.                |
+| Public or private parent channel | Supported as a launcher   | Run `/a2a workspace start ...`; the bridge creates a workspace thread. |
+| Thread below a configured parent | Supported                 | Mention `@A2ABridge` to send requests.                                 |
+| Group direct message             | Unsupported               | Discord bots cannot join group DMs.                                    |
 
 ## Fastest first success
 
@@ -30,7 +30,7 @@ Complete [Get started](../getting-started.md) before connecting Discord.
 For a shared workspace, run this in an allowlisted parent channel instead:
 
 ```text
-/a2a session new researcher Compare three deployment options
+/a2a workspace start researcher Compare three deployment options
 ```
 
 The bridge creates a thread. In that thread, send a request with:

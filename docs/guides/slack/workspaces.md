@@ -11,7 +11,8 @@ and ordinary text starts or continues the conversation:
 ```text
 /a2a agent list
 /a2a agent use concierge
-/a2a session new concierge Help me prepare a release
+/a2a session new concierge
+Help me prepare a release
 ```
 
 When exactly one agent is configured, the bridge selects it automatically.
@@ -23,7 +24,7 @@ active agent and Session; native `/a2a` commands and ordinary text work without
 creating a thread.
 
 ```text
-/a2a session new researcher Compare the two approaches
+/a2a session new researcher
 Turn that into a decision.
 ```
 
@@ -34,7 +35,7 @@ a workspace:
 
 ```text
 /a2a agent list
-/a2a session new concierge Draft a release checklist
+/a2a workspace start concierge Draft a release checklist
 ```
 
 The bridge creates a Slack thread and posts a persistent Block Kit workspace
@@ -54,7 +55,8 @@ posts an audit update when either changes.
 ## Interaction rules
 
 - Native `/a2a` supports every command in a 1:1 DM or allowlisted group DM. In
-  a channel it launches a workspace through `agent list` or `session new`.
+  a channel, `workspace start` launches a workspace; `agent list` previews its
+  eligible Agents.
 - In a configured channel thread, the bridge responds only to bot mentions;
   unrelated channel conversation is never forwarded to remote agents.
 - The app must be a member of each allowlisted channel or group DM before it

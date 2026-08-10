@@ -104,7 +104,7 @@ For Docker, Compose mounts local `config.yaml` read-only at `/app/config.yaml`.
 Slack is optional. It uses `SLACK_BOT_TOKEN` plus a separate Socket Mode
 `SLACK_APP_TOKEN`; keep both in `.env`, never in this file. Slack DMs support
 the full native command contract and ordinary text. In an allowlisted Slack channel,
-`/a2a session new [agent] [request]` creates a shared workspace thread. In that
+`/a2a workspace start [agent] [request]` creates a shared workspace thread. In that
 thread, mention the bot for an agent request or send `@A2ABridge /a2a …` for
 controls.
 
@@ -127,7 +127,7 @@ requires an app token with `connections:write`. Import
 [`app-manifest.yaml`](slack/app-manifest.yaml) or register `/a2a` in the Slack
 app settings, then reinstall the app.
 
-Use `/a2a session new [agent] [request]` to create a workspace thread. Mention
+Use `/a2a workspace start [agent] [request]` to create a workspace thread. Mention
 the bot there to send work to its shared Session. The Block Kit header identifies
 the selected agent and Session. All participants can invoke the agent, inspect
 Tasks, and change the workspace within its configured agent allowlist.

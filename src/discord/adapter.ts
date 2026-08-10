@@ -66,12 +66,12 @@ const a2aCommand = new SlashCommandBuilder()
   )
   .addSubcommandGroup((group) =>
     group
-      .setName("session")
-      .setDescription("Manage the selected agent session")
+      .setName("workspace")
+      .setDescription("Start a shared A2A workspace")
       .addSubcommand((command) =>
         command
-          .setName("new")
-          .setDescription("Start a fresh A2A conversation or workspace")
+          .setName("start")
+          .setDescription("Create a collaborative A2A workspace thread")
           .addStringOption((option) =>
             option
               .setName("agent")
@@ -80,7 +80,22 @@ const a2aCommand = new SlashCommandBuilder()
           .addStringOption((option) =>
             option
               .setName("request")
-              .setDescription("Optional first request for a new workspace"),
+              .setDescription("Optional first request for the workspace"),
+          ),
+      ),
+  )
+  .addSubcommandGroup((group) =>
+    group
+      .setName("session")
+      .setDescription("Manage the selected agent session")
+      .addSubcommand((command) =>
+        command
+          .setName("new")
+          .setDescription("Start a fresh A2A conversation")
+          .addStringOption((option) =>
+            option
+              .setName("agent")
+              .setDescription("Optional configured agent alias"),
           ),
       )
       .addSubcommand((command) =>
@@ -375,10 +390,16 @@ export class DiscordAdapter {
     const parentPolicy = this.parentChannelPolicy(interaction.channel);
     if (
       parentPolicy &&
-      workspaceCommand.group === "session" &&
-      workspaceCommand.action === "new"
+      workspaceCommand.group === "workspace" &&
+      workspaceCommand.action === "start"
     ) {
       await this.launchWorkspace(interaction, parentPolicy, workspaceCommand);
+      return;
+    }
+    if (workspaceCommand.group === "workspace") {
+      await interaction.reply(
+        "Start a workspace from an allowlisted parent channel with `/a2a workspace start [agent] [request]`.",
+      );
       return;
     }
 
@@ -387,7 +408,7 @@ export class DiscordAdapter {
       await interaction.reply(
         interaction.channel?.isDMBased()
           ? "A2A direct messages are disabled. Ask an operator to configure `directMessages`."
-          : "Use this command in an allowlisted thread, or `/a2a session new` in an allowlisted channel.",
+          : "Use this command in an allowlisted thread, or `/a2a workspace start` in an allowlisted channel.",
       );
       return;
     }
@@ -418,13 +439,20 @@ export class DiscordAdapter {
           agent: interaction.options.getString("agent", true),
         };
     }
+    if (group === "workspace" && action === "start") {
+      const values = [
+        interaction.options.getString("agent"),
+        interaction.options.getString("request"),
+      ].filter((value): value is string => value !== null);
+      return { group, action, arguments: values };
+    }
     if (group === "session") {
       if (action === "new") {
-        const values = [
-          interaction.options.getString("agent"),
-          interaction.options.getString("request"),
-        ].filter((value): value is string => value !== null);
-        return { group, action, arguments: values };
+        return {
+          group,
+          action,
+          agent: interaction.options.getString("agent") ?? undefined,
+        };
       }
       if (action === "current" || action === "list") return { group, action };
       if (action === "use")
@@ -449,7 +477,7 @@ export class DiscordAdapter {
   private async launchWorkspace(
     interaction: ChatInputCommandInteraction,
     policy: ChannelPolicy,
-    command: Extract<WorkspaceCommand, { group: "session"; action: "new" }>,
+    command: Extract<WorkspaceCommand, { group: "workspace"; action: "start" }>,
   ): Promise<void> {
     const channel = interaction.channel;
     if (!channel || channel.isThread() || !("threads" in channel)) {

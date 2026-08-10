@@ -1,6 +1,6 @@
 # ADR-0016: Cross-platform command parity
 
-- **Status**: accepted
+- **Status**: superseded by [ADR-0020](0020-explicit-workspace-launch-command.md)
 - **Date**: 2026-08-10
 - **Proposal**: [cross-platform-command-parity](../proposal/cross-platform-command-parity/README.md)
 

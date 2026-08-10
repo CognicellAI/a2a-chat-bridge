@@ -20,18 +20,19 @@ select only Agents allowed by the shared conversation policy.
 
 ## Commands
 
-| Command                              | Result                                                                                                         |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `/a2a agent list`                    | List agents allowed on the current surface.                                                                    |
-| `/a2a agent current`                 | Show the selected agent and Agent Card URL.                                                                    |
-| `/a2a agent use <agent>`             | Select an allowed agent alias or bridge ID.                                                                    |
-| `/a2a session new [agent] [request]` | Start a fresh Session. The optional request becomes the first A2A message when the launch surface supports it. |
-| `/a2a session current`               | Show Session ID, Context ID, and timestamps.                                                                   |
-| `/a2a session list`                  | List saved Sessions for the selected agent and surface.                                                        |
-| `/a2a session use <session>`         | Make a saved Session active again.                                                                             |
-| `/a2a task current`                  | Refresh the newest recorded Task in the active Session.                                                        |
-| `/a2a task list`                     | List recorded Tasks in the active Session.                                                                     |
-| `/a2a task status <task>`            | Refresh a recorded Task by remote Task ID.                                                                     |
+| Command                                  | Result                                                                  |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| `/a2a agent list`                        | List agents allowed on the current surface.                             |
+| `/a2a agent current`                     | Show the selected agent and Agent Card URL.                             |
+| `/a2a agent use <agent>`                 | Select an allowed agent alias or bridge ID.                             |
+| `/a2a workspace start [agent] [request]` | Create a shared channel-thread workspace and its first Session.         |
+| `/a2a session new [agent]`               | Start a fresh Session in the current DM, group DM, or workspace thread. |
+| `/a2a session current`                   | Show Session ID, Context ID, and timestamps.                            |
+| `/a2a session list`                      | List saved Sessions for the selected agent and surface.                 |
+| `/a2a session use <session>`             | Make a saved Session active again.                                      |
+| `/a2a task current`                      | Refresh the newest recorded Task in the active Session.                 |
+| `/a2a task list`                         | List recorded Tasks in the active Session.                              |
+| `/a2a task status <task>`                | Refresh a recorded Task by remote Task ID.                              |
 
 Starting a new Session does not cancel an already-running remote Task.
 
@@ -40,7 +41,7 @@ Starting a new Session does not cancel an already-running remote Task.
 ### Discord
 
 Use Discord's native `/a2a` command picker in a configured bot DM or eligible
-public/private thread. In an allowlisted parent channel, `/a2a session new`
+public/private thread. In an allowlisted parent channel, `/a2a workspace start`
 creates an A2A workspace thread. Inside a workspace thread, mention the bot to
 send an ordinary request to the selected agent.
 
@@ -49,10 +50,10 @@ See [Discord integration and usage](discord/README.md).
 ### Slack
 
 Use the full native `/a2a` contract in a configured Slack App Home DM or
-allowlisted group DM. In an allowlisted channel, use `agent list` or `session new
-[agent] [request]` to launch a workspace. Slack developer slash commands cannot
-run inside message threads. In a workspace thread, use its Block Kit header or
-mention the bot:
+allowlisted group DM. In an allowlisted channel, use `agent list` or `workspace
+start [agent] [request]` to launch a workspace. Slack developer slash commands
+cannot run inside message threads. In a workspace thread, use its Block Kit
+header or mention the bot:
 
 ```text
 @A2ABridge Summarize the options above.
