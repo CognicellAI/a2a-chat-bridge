@@ -133,6 +133,8 @@ export class WorkspaceCommands {
       return this.availableAgent(scope.defaultAgent, scope);
     const aliases = scope.agentAliases;
     if (aliases?.length === 1) return this.availableAgent(aliases[0], scope);
+    const available = await this.availableAgents(scope);
+    if (available.length === 1) return available[0];
     return undefined;
   }
 
@@ -346,4 +348,8 @@ export class WorkspaceCommands {
 }
 
 export const surfaceLabel = (surface: Surface): string =>
-  surface.kind === "dm" ? "DM" : "thread";
+  surface.kind === "dm"
+    ? "DM"
+    : surface.kind === "group-dm"
+      ? "group DM"
+      : "thread";

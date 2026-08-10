@@ -11,7 +11,7 @@ discord:
 slack:
   botTokenEnv: SLACK_BOT_TOKEN
   appTokenEnv: SLACK_APP_TOKEN
-  channels: []
+  conversations: []
 stateFile: ./data/state.json
 
 agents:
@@ -27,15 +27,16 @@ agents:
 
 ## Settings
 
-| Key                      | Default             | Purpose                                                   |
-| ------------------------ | ------------------- | --------------------------------------------------------- |
-| `discord.tokenEnv`       | —                   | Required environment-variable name for the Discord token. |
-| `discord.channels`       | `[]`                | Parent-channel policy and its allowed Agent aliases.      |
-| `stateFile`              | `./data/state.json` | Local Session and Task metadata.                          |
-| `editIntervalMs`         | `1200`              | Minimum interval between streaming-reply edits.           |
-| `pollIntervalMs`         | `1500`              | `GetTask` polling interval for non-streaming agents.      |
-| `configReloadIntervalMs` | `2000`              | Configuration check interval.                             |
-| `agents`                 | omitted             | Remote-agent allowlist; use `[]` to manage an empty list. |
+| Key                      | Default             | Purpose                                                      |
+| ------------------------ | ------------------- | ------------------------------------------------------------ |
+| `discord.tokenEnv`       | —                   | Required environment-variable name for the Discord token.    |
+| `discord.channels`       | `[]`                | Parent-channel policy and its allowed Agent aliases.         |
+| `slack.conversations`    | `[]`                | Shared Slack channel or group-DM policy and allowed aliases. |
+| `stateFile`              | `./data/state.json` | Local Session and Task metadata.                             |
+| `editIntervalMs`         | `1200`              | Minimum interval between streaming-reply edits.              |
+| `pollIntervalMs`         | `1500`              | `GetTask` polling interval for non-streaming agents.         |
+| `configReloadIntervalMs` | `2000`              | Configuration check interval.                                |
+| `agents`                 | omitted             | Remote-agent allowlist; use `[]` to manage an empty list.    |
 
 ## Agents and authentication
 
@@ -66,7 +67,7 @@ falls back from one mode to another.
 
 ## Discord shared workspaces
 
-Leave `channels` empty for DMs only. Each entry enables public threads below one
+Leave `channels` empty for DMs only. Each entry enables public or private threads below one
 parent and restricts them to its configured Agent aliases:
 
 ```yaml
@@ -78,9 +79,9 @@ discord:
 ```
 
 `agents` is required and must name configured aliases; `defaultAgent` is
-optional and must appear in `agents`. Any public-thread participant may change
-the agent or Session within this allowlist. Private threads, root channels, and
-unmentioned thread messages are ignored. See [Discord integration and usage](discord/README.md)
+optional and must appear in `agents`. Any eligible-thread participant may change
+the agent or Session within this allowlist. Root-channel and unmentioned thread
+messages are ignored. Discord group DMs are unavailable to bots. See [Discord integration and usage](discord/README.md)
 for permissions and workflow.
 
 ## Reload and state
@@ -97,8 +98,8 @@ For Docker, Compose mounts local `config.yaml` read-only at `/app/config.yaml`.
 ## Slack Socket Mode
 
 Slack is optional. It uses `SLACK_BOT_TOKEN` plus a separate Socket Mode
-`SLACK_APP_TOKEN`; keep both in `.env`, never in this file. Slack DMs accept
-ordinary text. In an allowlisted Slack channel,
+`SLACK_APP_TOKEN`; keep both in `.env`, never in this file. Slack DMs support
+the full native command contract and ordinary text. In an allowlisted Slack channel,
 `/a2a session new [agent] [request]` creates a shared workspace thread. In that
 thread, mention the bot for an agent request or send `@A2ABridge /a2a …` for
 controls.
@@ -107,17 +108,20 @@ controls.
 slack:
   botTokenEnv: SLACK_BOT_TOKEN
   appTokenEnv: SLACK_APP_TOKEN
-  channels:
+  conversations:
     - id: C0123456789
       agents: [concierge]
       defaultAgent: concierge
 ```
 
-All Slack channel participants may select an allowlisted agent and create or
-resume a shared Session. Configure Slack with `app_mentions:read`, `im:history`,
-`chat:write`, and `commands`; enable interactivity; Socket Mode requires an app
-token with `connections:write`. Import [`app-manifest.yaml`](slack/app-manifest.yaml)
-or register `/a2a` in the Slack app settings, then reinstall the app.
+All Slack channel or group-DM participants may select an allowlisted agent and
+create or resume a shared Session. A group DM uses its own conversation ID and
+works directly without a thread. Configure Slack with `app_mentions:read`,
+`im:history`, `im:read`, `mpim:history`, `mpim:read`, `channels:read`,
+`groups:read`, `chat:write`, and `commands`; enable interactivity; Socket Mode
+requires an app token with `connections:write`. Import
+[`app-manifest.yaml`](slack/app-manifest.yaml) or register `/a2a` in the Slack
+app settings, then reinstall the app.
 
 Use `/a2a session new [agent] [request]` to create a workspace thread. Mention
 the bot there to send work to its shared Session. The Block Kit header identifies

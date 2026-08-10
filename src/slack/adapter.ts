@@ -1,6 +1,6 @@
 import { App, LogLevel, type RespondFn, type SlashCommand } from "@slack/bolt";
 import type { KnownBlock } from "@slack/types";
-import type { SlackChannelPolicy } from "../config.js";
+import type { SlackConversationPolicy } from "../config.js";
 import type { A2AConnector } from "../core/a2a-connector.js";
 import type { ContactRegistry } from "../core/contacts.js";
 import type { RuntimeConfig } from "../core/runtime-config.js";
@@ -33,7 +33,7 @@ interface SlackMessage {
   readonly user: string;
   readonly text: string;
   readonly surface: Surface;
-  readonly policy?: SlackChannelPolicy;
+  readonly policy?: SlackConversationPolicy;
 }
 
 interface SlackAction {
@@ -53,6 +53,19 @@ interface SlackActionBody {
 }
 
 const maxMessageLength = 4_000;
+export type SlackConversationKind = "dm" | "group-dm" | "channel";
+
+export const slackConversationKind = (conversation: {
+  readonly is_im?: boolean;
+  readonly is_mpim?: boolean;
+  readonly is_channel?: boolean;
+  readonly is_group?: boolean;
+}): SlackConversationKind | undefined => {
+  if (conversation.is_im) return "dm";
+  if (conversation.is_mpim) return "group-dm";
+  if (conversation.is_channel || conversation.is_group) return "channel";
+  return undefined;
+};
 
 export class SlackAdapter {
   private readonly app: App;
@@ -87,7 +100,8 @@ export class SlackAdapter {
     );
     this.app.event("message", async ({ event, client }) => {
       const message = event as SlackEvent;
-      if (message.channel_type === "im") await this.handleDm(message, client);
+      if (message.channel_type === "im" || message.channel_type === "mpim")
+        await this.handleDirect(message, client);
     });
     this.app.command("/a2a", async ({ command, ack, client, respond }) => {
       await ack();
@@ -105,15 +119,17 @@ export class SlackAdapter {
     console.info("Connected to Slack through Socket Mode.");
   }
 
-  private policy(channel: string): SlackChannelPolicy | undefined {
+  private policy(channel: string): SlackConversationPolicy | undefined {
     return this.runtimeConfig
       .snapshot()
-      .config.slack?.channels.find((candidate) => candidate.id === channel);
+      .config.slack?.conversations.find(
+        (candidate) => candidate.id === channel,
+      );
   }
 
   private scope(
     surface: Surface,
-    policy: SlackChannelPolicy | undefined,
+    policy: SlackConversationPolicy | undefined,
   ): CommandScope {
     return {
       surface,
@@ -122,20 +138,39 @@ export class SlackAdapter {
     };
   }
 
-  private async handleDm(
+  private async handleDirect(
     event: SlackEvent,
     client: App["client"],
   ): Promise<void> {
     if (!event.user || event.bot_id || event.subtype || !event.text) return;
+    const kind = event.channel_type === "mpim" ? "group-dm" : "dm";
+    const policy = kind === "group-dm" ? this.policy(event.channel) : undefined;
+    if (kind === "group-dm" && !policy) {
+      await client.chat.postMessage({
+        channel: event.channel,
+        text: "This group DM is not configured for A2A. Ask an operator to add its conversation ID to `slack.conversations`.",
+      });
+      return;
+    }
     await this.handle(
       {
         channel: event.channel,
         user: event.user,
         text: event.text.trim(),
-        surface: { platform: "slack", kind: "dm", id: event.channel },
+        policy,
+        surface: { platform: "slack", kind, id: event.channel },
       },
       client,
     );
+  }
+
+  private async conversationKind(
+    client: App["client"],
+    channel: string,
+  ): Promise<SlackConversationKind | undefined> {
+    const response = await client.conversations.info({ channel });
+    const conversation = response.channel;
+    return conversation ? slackConversationKind(conversation) : undefined;
   }
 
   private async handleMention(
@@ -177,19 +212,66 @@ export class SlackAdapter {
     client: App["client"],
     respond: RespondFn,
   ): Promise<void> {
-    const policy = this.policy(command.channel_id);
-    if (!policy) {
-      await respond({
-        response_type: "ephemeral",
-        text: "Use `/a2a` in a channel configured for this bridge.",
-      });
-      return;
-    }
     const parsed = parseWorkspaceCommand(`/a2a ${command.text}`);
     if (!parsed) {
       await respond({
         response_type: "ephemeral",
-        text: `${commandHelp}\nSlack native commands can launch a workspace with \`/a2a session new [agent] [request]\`; use thread controls for the rest.`,
+        text: commandHelp,
+      });
+      return;
+    }
+    const kind = await this.conversationKind(client, command.channel_id);
+    if (!kind) {
+      await respond({
+        response_type: "ephemeral",
+        text: "This Slack conversation type is unavailable for A2A.",
+      });
+      return;
+    }
+    const policy = kind === "dm" ? undefined : this.policy(command.channel_id);
+    if (kind === "group-dm" && !policy) {
+      await respond({
+        response_type: "ephemeral",
+        text: "This group DM is not configured for A2A. Ask an operator to add its conversation ID to `slack.conversations`.",
+      });
+      return;
+    }
+    if (kind === "dm" || kind === "group-dm") {
+      const message: SlackMessage = {
+        channel: command.channel_id,
+        user: command.user_id,
+        text: "",
+        policy,
+        surface: { platform: "slack", kind, id: command.channel_id },
+      };
+      const result = await this.workspaceCommands.execute(
+        parsed,
+        this.scope(message.surface, message.policy),
+      );
+      await respond({
+        response_type: "ephemeral",
+        text: this.render(result, message.surface),
+      });
+      if (kind === "group-dm" && this.isWorkspaceChange(result))
+        await this.post(
+          client,
+          message,
+          this.auditMessage(command.user_id, result),
+        );
+      if (result.kind === "session-new" && result.initialRequest)
+        await this.sendRequest(
+          message,
+          client,
+          result.agent,
+          result.session,
+          result.initialRequest,
+        );
+      return;
+    }
+    if (!policy) {
+      await respond({
+        response_type: "ephemeral",
+        text: "Use `/a2a` in a conversation configured for this bridge.",
       });
       return;
     }
@@ -197,7 +279,7 @@ export class SlackAdapter {
       const result = await this.workspaceCommands.execute(
         parsed,
         this.scope(
-          { platform: "slack", kind: "dm", id: command.channel_id },
+          { platform: "slack", kind: "thread", id: command.channel_id },
           policy,
         ),
       );
@@ -469,7 +551,7 @@ export class SlackAdapter {
     channel: string,
     threadTs: string,
     user: string,
-    policy: SlackChannelPolicy,
+    policy: SlackConversationPolicy,
   ): SlackMessage {
     return {
       channel,
@@ -557,7 +639,7 @@ export class SlackAdapter {
     workspaceThreadTs: string,
     agent: Contact,
     session: Session,
-    policy: SlackChannelPolicy,
+    policy: SlackConversationPolicy,
   ): Promise<void> {
     await client.chat.update({
       channel,
@@ -575,7 +657,7 @@ export class SlackAdapter {
   private async headerBlocks(
     agent: Contact,
     session: Session,
-    policy: SlackChannelPolicy | undefined,
+    policy: SlackConversationPolicy | undefined,
     threadTs: string,
   ): Promise<KnownBlock[]> {
     const agents = await this.workspaceCommands.availableAgents({
@@ -732,7 +814,7 @@ export class SlackAdapter {
           : "No configured A2A agents are currently available.";
       case "agent-current":
         return result.agent
-          ? `This ${surface.kind === "dm" ? "DM" : "thread"} is using *${result.agent.name}* (${this.aliasFor(result.agent) ?? result.agent.id}).\nAgent Card: ${result.agent.agentCardUrl}`
+          ? `This ${surface.kind === "thread" ? "thread" : surface.kind === "group-dm" ? "group DM" : "DM"} is using *${result.agent.name}* (${this.aliasFor(result.agent) ?? result.agent.id}).\nAgent Card: ${result.agent.agentCardUrl}`
           : "No A2A agent is selected. Run `/a2a agent list`, then `/a2a agent use <agent>`.";
       case "agent-selected":
         return `Selected *${result.agent.name}* (${this.aliasFor(result.agent) ?? result.agent.id}).`;

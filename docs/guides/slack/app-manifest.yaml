@@ -6,8 +6,8 @@ features:
     always_online: true
   slash_commands:
     - command: /a2a
-      description: Launch an A2A agent workspace
-      usage_hint: session new [agent] [request] | agent list
+      description: Control an A2A agent workspace
+      usage_hint: agent list|use <agent> | session new [agent] [request]
       should_escape: false
 oauth_config:
   scopes:
@@ -16,6 +16,11 @@ oauth_config:
       - chat:write
       - commands
       - im:history
+      - im:read
+      - mpim:history
+      - mpim:read
+      - channels:read
+      - groups:read
 settings:
   interactivity:
     is_enabled: true
@@ -23,5 +28,6 @@ settings:
     bot_events:
       - app_mention
       - message.im
+      - message.mpim
   socket_mode_enabled: true
   token_rotation_enabled: false

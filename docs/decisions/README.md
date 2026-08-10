@@ -36,3 +36,4 @@ Rules:
 | [0015](0015-native-slack-command-launcher.md)          | Native Slack command launcher                     | accepted   | 2026-08-10 |
 | [0016](0016-cross-platform-command-parity.md)          | Cross-platform command parity                     | accepted   | 2026-08-10 |
 | [0017](0017-native-platform-collaboration.md)          | Native-platform collaboration                     | accepted   | 2026-08-10 |
+| [0018](0018-conversation-surface-coverage.md)          | Conversation-surface coverage                     | accepted   | 2026-08-10 |

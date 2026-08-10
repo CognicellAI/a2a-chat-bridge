@@ -2,8 +2,9 @@
 
 A self-hosted, single-tenant Discord and Slack bridge for remote A2A v1.0
 agents. It is a handset: agents are explicitly configured by exact Agent Card
-URL and no agent is auto-routed or hosted by this application. It supports DMs
-and shared public thread workspaces below operator-allowlisted parent channels.
+URL and no agent is auto-routed or hosted by this application. It supports
+private DMs, shared Slack group DMs, and shared thread workspaces below
+operator-allowlisted parent channels.
 
 Maintained by [CognicellAI](https://cognicellai.com/) and released under the
 [Apache-2.0 License](LICENSE).
@@ -27,7 +28,7 @@ common command reference, and adapter-native guides for
 Configured agents are fetched and cached automatically. Use native Discord
 commands or Slack's `/a2a` launcher to create a workspace. Normal DM messages
 become A2A messages in the active local Session, which retains the remote
-`contextId`. In an enabled public thread, mention the bridge bot to send a
+`contextId`. In an enabled thread, mention the bridge bot to send a
 message to its shared agent workspace.
 
 | Need                                      | Shared command                                  |
@@ -47,8 +48,7 @@ See the adapter guides for platform-specific response behavior and limits.
 `bun run format`, `bun run typecheck`, `bun test`, and `bun run build`.
 
 `bun run build` produces `dist/a2a-chat-bridge`. No inbound port, artifact
-uploads, private-channel support, Slack Connect, or per-user auth are included
-in v0.2.0.
+uploads, Slack Connect, or per-user auth are included in v0.2.0.
 
 ## Contributing and security
 

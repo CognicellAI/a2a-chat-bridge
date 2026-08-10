@@ -1,6 +1,5 @@
 import {
   ApplicationIntegrationType,
-  ChannelType,
   Client,
   Events,
   GatewayIntentBits,
@@ -226,12 +225,7 @@ export class DiscordAdapter {
   }
 
   private threadPolicy(channel: BaseChannel): ChannelPolicy | undefined {
-    if (
-      !channel.isThread() ||
-      channel.type !== ChannelType.PublicThread ||
-      channel.parentId === null
-    )
-      return undefined;
+    if (!channel.isThread() || channel.parentId === null) return undefined;
     return this.runtimeConfig
       .snapshot()
       .config.discord?.channels.find(
@@ -375,7 +369,7 @@ export class DiscordAdapter {
     const scope = this.commandScope(interaction);
     if (!scope) {
       await interaction.reply(
-        "Use this command in a direct message, an allowlisted public thread, or `/a2a session new` in an allowlisted channel.",
+        "Use this command in a direct message, an allowlisted thread, or `/a2a session new` in an allowlisted channel.",
       );
       return;
     }
@@ -566,7 +560,11 @@ export class DiscordAdapter {
   }
 
   private surfaceLabel(surface: Surface): string {
-    return surface.kind === "dm" ? "DM" : "thread";
+    return surface.kind === "dm"
+      ? "DM"
+      : surface.kind === "group-dm"
+        ? "group DM"
+        : "thread";
   }
 
   private threadMessageContent(message: Message): string {

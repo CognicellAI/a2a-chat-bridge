@@ -144,4 +144,31 @@ describe("workspace command core", () => {
       ),
     ).resolves.toMatchObject({ kind: "session-selected" });
   });
+
+  it("selects the only configured agent on an unscoped direct surface", async () => {
+    const state = new MemoryStateStore();
+    await state.saveContact({
+      id: "concierge-id",
+      name: "Concierge",
+      agentCardUrl: "https://concierge.example/card",
+      description: "",
+      supportsStreaming: true,
+      createdAt: "now",
+    });
+    const commands = new WorkspaceCommands(
+      state,
+      {} as A2AConnector,
+      runtimeConfig,
+    );
+
+    await expect(
+      commands.execute(
+        { group: "agent", action: "current" },
+        { surface: { platform: "slack", kind: "dm", id: "D123" } },
+      ),
+    ).resolves.toMatchObject({
+      kind: "agent-current",
+      agent: { id: "concierge-id" },
+    });
+  });
 });

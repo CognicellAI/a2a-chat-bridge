@@ -84,12 +84,12 @@ describe("Runtime configuration", () => {
     });
   });
 
-  it("accepts a Slack Socket Mode policy without bridge-owned mutators", async () => {
+  it("accepts Slack conversation policies without bridge-owned mutators", async () => {
     directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
     const file = join(directory, "config.yaml");
     await writeFile(
       file,
-      "slack:\n  botTokenEnv: SLACK_BOT_TOKEN\n  appTokenEnv: SLACK_APP_TOKEN\n  channels:\n    - id: C0123456789\n      agents: [concierge]\n      defaultAgent: concierge\nstateFile: ./data/state.json\nagents:\n  - agentCardUrl: https://agent.example/.well-known/agent-card.json\n    alias: concierge\n",
+      "slack:\n  botTokenEnv: SLACK_BOT_TOKEN\n  appTokenEnv: SLACK_APP_TOKEN\n  conversations:\n    - id: C0123456789\n      agents: [concierge]\n      defaultAgent: concierge\nstateFile: ./data/state.json\nagents:\n  - agentCardUrl: https://agent.example/.well-known/agent-card.json\n    alias: concierge\n",
     );
 
     await expect(loadConfig(file)).resolves.toMatchObject({
@@ -97,9 +97,22 @@ describe("Runtime configuration", () => {
       slack: {
         botTokenEnv: "SLACK_BOT_TOKEN",
         appTokenEnv: "SLACK_APP_TOKEN",
-        channels: [{ id: "C0123456789", agents: ["concierge"] }],
+        conversations: [{ id: "C0123456789", agents: ["concierge"] }],
       },
     });
+  });
+
+  it("rejects the renamed Slack channels key", async () => {
+    directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
+    const file = join(directory, "config.yaml");
+    await writeFile(
+      file,
+      "slack:\n  botTokenEnv: SLACK_BOT_TOKEN\n  appTokenEnv: SLACK_APP_TOKEN\n  channels: []\nstateFile: ./data/state.json\n",
+    );
+
+    await expect(loadConfig(file)).rejects.toThrow(
+      "config.slack.channels is unsupported",
+    );
   });
 
   it("rejects a channel policy that names an unknown Agent alias", async () => {

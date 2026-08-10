@@ -12,9 +12,9 @@ by platform; the commands and their meaning do not.
 | **Context ID** | A remote-agent-generated A2A identifier that groups related Tasks in one conversation.           |
 | **Task**       | A bridge-recorded unit of remote A2A work. The remote agent remains authoritative for its state. |
 
-A direct message is private to that conversation. A shared workspace thread has
-one selected agent and one active Session for all its participants. Participants
-may select only agents allowed by the parent-channel policy.
+A direct message is private to that conversation. A shared group DM or workspace
+thread has one selected agent and active Session for all its participants.
+Participants may select only agents allowed by the shared conversation policy.
 
 ## Commands
 
@@ -37,8 +37,8 @@ Starting a new Session does not cancel an already-running remote Task.
 
 ### Discord
 
-Use Discord's native `/a2a` command picker in a DM or eligible public thread.
-In an allowlisted parent channel, `/a2a session new` creates a public A2A
+Use Discord's native `/a2a` command picker in a bot DM or eligible public/private
+thread. In an allowlisted parent channel, `/a2a session new` creates an A2A
 workspace thread. Inside a workspace thread, mention the bot to send an ordinary
 request to the selected agent.
 
@@ -46,8 +46,9 @@ See [Discord integration and usage](discord/README.md).
 
 ### Slack
 
-Use native `/a2a agent list` and `/a2a session new [agent] [request]` in an
-allowlisted channel. Slack developer slash commands cannot run inside message
+Use the full native `/a2a` contract in a Slack DM or allowlisted group DM. In an
+allowlisted channel, use `agent list` or `session new [agent] [request]` to
+launch a workspace. Slack developer slash commands cannot run inside message
 threads. In a workspace thread, use its Block Kit header or mention the bot:
 
 ```text
@@ -59,7 +60,7 @@ See [Slack integration and usage](slack/README.md).
 
 ## Collaboration
 
-Discord and Slack decide who may enter and administer their channels and
-threads. The bridge does not define cross-platform roles. It limits agent choice
-to the channel policy and posts an audit notice when someone changes the active
-agent or Session.
+Discord and Slack decide who may enter and administer their supported
+conversations. The bridge does not define cross-platform roles. It limits agent
+choice to the shared conversation policy and posts an audit notice when someone
+changes the active agent or Session.

@@ -1,14 +1,14 @@
 discord:
   tokenEnv: DISCORD_BOT_TOKEN
-  # Optional: parent channels and the Agent aliases their public threads may use.
+  # Optional: parent channels and the Agent aliases their public/private threads may use.
   channels: []
 
-# Optional Slack Socket Mode adapter. Channel membership controls collaboration;
-# `agents` limits the remote agents a shared workspace may use.
+# Optional Slack Socket Mode adapter. Platform membership controls collaboration;
+# `agents` limits the remote agents a shared conversation may use.
 # slack:
 #   botTokenEnv: SLACK_BOT_TOKEN
 #   appTokenEnv: SLACK_APP_TOKEN
-#   channels:
+#   conversations:
 #     - id: C0123456789
 #       agents: [concierge]
 #       defaultAgent: concierge
