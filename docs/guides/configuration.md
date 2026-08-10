@@ -12,6 +12,9 @@ slack:
   botTokenEnv: SLACK_BOT_TOKEN
   appTokenEnv: SLACK_APP_TOKEN
   conversations: []
+directMessages:
+  agents: [concierge]
+  defaultAgent: concierge
 stateFile: ./data/state.json
 
 agents:
@@ -27,16 +30,17 @@ agents:
 
 ## Settings
 
-| Key                      | Default             | Purpose                                                      |
-| ------------------------ | ------------------- | ------------------------------------------------------------ |
-| `discord.tokenEnv`       | —                   | Required environment-variable name for the Discord token.    |
-| `discord.channels`       | `[]`                | Parent-channel policy and its allowed Agent aliases.         |
-| `slack.conversations`    | `[]`                | Shared Slack channel or group-DM policy and allowed aliases. |
-| `stateFile`              | `./data/state.json` | Local Session and Task metadata.                             |
-| `editIntervalMs`         | `1200`              | Minimum interval between streaming-reply edits.              |
-| `pollIntervalMs`         | `1500`              | `GetTask` polling interval for non-streaming agents.         |
-| `configReloadIntervalMs` | `2000`              | Configuration check interval.                                |
-| `agents`                 | omitted             | Remote-agent allowlist; use `[]` to manage an empty list.    |
+| Key                      | Default             | Purpose                                                                    |
+| ------------------------ | ------------------- | -------------------------------------------------------------------------- |
+| `discord.tokenEnv`       | —                   | Required environment-variable name for the Discord token.                  |
+| `discord.channels`       | `[]`                | Parent-channel policy and its allowed Agent aliases.                       |
+| `slack.conversations`    | `[]`                | Shared Slack channel or group-DM policy and allowed aliases.               |
+| `directMessages`         | absent              | Cross-adapter private bot-DM Agent allowlist; absent disables private DMs. |
+| `stateFile`              | `./data/state.json` | Local Session and Task metadata.                                           |
+| `editIntervalMs`         | `1200`              | Minimum interval between streaming-reply edits.                            |
+| `pollIntervalMs`         | `1500`              | `GetTask` polling interval for non-streaming agents.                       |
+| `configReloadIntervalMs` | `2000`              | Configuration check interval.                                              |
+| `agents`                 | omitted             | Remote-agent allowlist; use `[]` to manage an empty list.                  |
 
 ## Agents and authentication
 

@@ -102,6 +102,32 @@ describe("Runtime configuration", () => {
     });
   });
 
+  it("requires an explicit, valid Agent allowlist for private direct messages", async () => {
+    directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
+    const file = join(directory, "config.yaml");
+    await writeFile(
+      file,
+      "discord:\n  tokenEnv: DISCORD_BOT_TOKEN\ndirectMessages:\n  agents: [concierge]\n  defaultAgent: concierge\nstateFile: ./data/state.json\nagents:\n  - agentCardUrl: https://agent.example/.well-known/agent-card.json\n    alias: concierge\n",
+    );
+
+    await expect(loadConfig(file)).resolves.toMatchObject({
+      directMessages: { agents: ["concierge"], defaultAgent: "concierge" },
+    });
+  });
+
+  it("rejects a direct-message policy that names an unknown Agent alias", async () => {
+    directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
+    const file = join(directory, "config.yaml");
+    await writeFile(
+      file,
+      "discord:\n  tokenEnv: DISCORD_BOT_TOKEN\ndirectMessages:\n  agents: [missing]\nstateFile: ./data/state.json\nagents: []\n",
+    );
+
+    await expect(loadConfig(file)).rejects.toThrow(
+      "config.directMessages references unknown Agent alias missing",
+    );
+  });
+
   it("rejects the renamed Slack channels key", async () => {
     directory = await mkdtemp(join(tmpdir(), "a2a-chat-bridge-"));
     const file = join(directory, "config.yaml");

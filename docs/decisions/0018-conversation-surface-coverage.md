@@ -1,6 +1,6 @@
 # ADR-0018: Conversation-surface coverage
 
-- **Status**: accepted
+- **Status**: superseded by [ADR-0019](0019-direct-message-agent-policy.md)
 - **Date**: 2026-08-10
 - **Proposal**: [conversation-surface-coverage](../proposal/conversation-surface-coverage/README.md)
 

@@ -9,7 +9,7 @@ configuration by exact Agent Card URL; the bridge never auto-routes traffic.
 C4Context
     title System Context — a2a-chat-bridge (v1)
 
-    Person(user, "Chat participant", "Uses a private DM, supported shared direct conversation, or shared thread workspace")
+    Person(user, "Chat participant", "Uses an operator-enabled private DM, supported shared direct conversation, or shared thread workspace")
 
     System(bridge, "a2a-chat-bridge", "Self-hosted, single-tenant A2A client. CPE — a handset, not a switchboard.")
 
@@ -42,9 +42,10 @@ supplied URL verbatim and caches the card.
 
 a2a-chat-bridge lets a workspace owner and their invited collaborators talk to
 any A2A v1.0 agent from Discord or Slack without giving any third party a position in the
-traffic path. A shared conversation can be an agent workspace only when its
-parent or group-DM conversation is allowlisted; otherwise the bridge remains
-DM-first. Discord group DMs and Slack Connect are explicitly unsupported.
+traffic path. A private bot DM can be an Agent workspace only when the operator
+enables the cross-adapter direct-message policy; a shared conversation requires
+its parent or group-DM conversation to be allowlisted. Discord group DMs and
+Slack Connect are explicitly unsupported.
 Motivation and trade-offs:
 [proposal](../proposal/multi-platform-bridge/README.md),
 [ADR-0001](../decisions/0001-chat-bridge-as-cpe-mvp.md).

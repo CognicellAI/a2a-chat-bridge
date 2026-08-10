@@ -26,11 +26,16 @@ discord:
     - id: 123456789012345678
       agents: [concierge, researcher]
       defaultAgent: concierge
+directMessages:
+  agents: [concierge]
+  defaultAgent: concierge
 ```
 
 The `agents` list is the approved remote-agent selection for every workspace
-thread under that parent. The bridge does not add a Discord role system;
-Discord server, channel, and thread permissions determine participation.
+thread under that parent. `directMessages` is the approved selection for every
+private bot DM; omit it to disable private DMs. The bridge does not add a
+Discord role system; Discord server, channel, and thread permissions determine
+participation.
 
 ## 3. Find the parent channel ID
 

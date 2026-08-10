@@ -1,6 +1,9 @@
 import { App, LogLevel, type RespondFn, type SlashCommand } from "@slack/bolt";
 import type { KnownBlock } from "@slack/types";
-import type { SlackConversationPolicy } from "../config.js";
+import type {
+  DirectMessagePolicy,
+  SlackConversationPolicy,
+} from "../config.js";
 import type { A2AConnector } from "../core/a2a-connector.js";
 import type { ContactRegistry } from "../core/contacts.js";
 import type { RuntimeConfig } from "../core/runtime-config.js";
@@ -33,7 +36,7 @@ interface SlackMessage {
   readonly user: string;
   readonly text: string;
   readonly surface: Surface;
-  readonly policy?: SlackConversationPolicy;
+  readonly policy?: Pick<SlackConversationPolicy, "agents" | "defaultAgent">;
 }
 
 interface SlackAction {
@@ -127,9 +130,14 @@ export class SlackAdapter {
       );
   }
 
+  private directMessagePolicy(): DirectMessagePolicy | undefined {
+    return this.runtimeConfig.snapshot().config.directMessages;
+  }
+
   private scope(
     surface: Surface,
-    policy: SlackConversationPolicy | undefined,
+    policy:
+      Pick<SlackConversationPolicy, "agents" | "defaultAgent"> | undefined,
   ): CommandScope {
     return {
       surface,
@@ -144,11 +152,17 @@ export class SlackAdapter {
   ): Promise<void> {
     if (!event.user || event.bot_id || event.subtype || !event.text) return;
     const kind = event.channel_type === "mpim" ? "group-dm" : "dm";
-    const policy = kind === "group-dm" ? this.policy(event.channel) : undefined;
-    if (kind === "group-dm" && !policy) {
+    const policy =
+      kind === "group-dm"
+        ? this.policy(event.channel)
+        : this.directMessagePolicy();
+    if (!policy) {
       await client.chat.postMessage({
         channel: event.channel,
-        text: "This group DM is not configured for A2A. Ask an operator to add its conversation ID to `slack.conversations`.",
+        text:
+          kind === "group-dm"
+            ? "This group DM is not configured for A2A. Ask an operator to add its conversation ID to `slack.conversations`."
+            : "A2A direct messages are disabled. Ask an operator to configure `directMessages`.",
       });
       return;
     }
@@ -228,11 +242,17 @@ export class SlackAdapter {
       });
       return;
     }
-    const policy = kind === "dm" ? undefined : this.policy(command.channel_id);
-    if (kind === "group-dm" && !policy) {
+    const policy =
+      kind === "dm"
+        ? this.directMessagePolicy()
+        : this.policy(command.channel_id);
+    if ((kind === "dm" || kind === "group-dm") && !policy) {
       await respond({
         response_type: "ephemeral",
-        text: "This group DM is not configured for A2A. Ask an operator to add its conversation ID to `slack.conversations`.",
+        text:
+          kind === "group-dm"
+            ? "This group DM is not configured for A2A. Ask an operator to add its conversation ID to `slack.conversations`."
+            : "A2A direct messages are disabled. Ask an operator to configure `directMessages`.",
       });
       return;
     }
@@ -268,6 +288,7 @@ export class SlackAdapter {
         );
       return;
     }
+    const channelPolicy = policy as SlackConversationPolicy;
     if (!policy) {
       await respond({
         response_type: "ephemeral",
@@ -280,7 +301,7 @@ export class SlackAdapter {
         parsed,
         this.scope(
           { platform: "slack", kind: "thread", id: command.channel_id },
-          policy,
+          channelPolicy,
         ),
       );
       await respond({
@@ -310,11 +331,11 @@ export class SlackAdapter {
       command.channel_id,
       root.ts,
       command.user_id,
-      policy,
+      channelPolicy,
     );
     const result = await this.workspaceCommands.execute(
       parsed,
-      this.scope(message.surface, policy),
+      this.scope(message.surface, channelPolicy),
     );
     if (result.kind !== "session-new") {
       await client.chat.update({
@@ -335,7 +356,7 @@ export class SlackAdapter {
       root.ts,
       result.agent,
       result.session,
-      policy,
+      channelPolicy,
     );
     await client.chat.postMessage({
       channel: command.channel_id,
@@ -551,7 +572,7 @@ export class SlackAdapter {
     channel: string,
     threadTs: string,
     user: string,
-    policy: SlackConversationPolicy,
+    policy: Pick<SlackConversationPolicy, "agents" | "defaultAgent">,
   ): SlackMessage {
     return {
       channel,
@@ -657,7 +678,8 @@ export class SlackAdapter {
   private async headerBlocks(
     agent: Contact,
     session: Session,
-    policy: SlackConversationPolicy | undefined,
+    policy:
+      Pick<SlackConversationPolicy, "agents" | "defaultAgent"> | undefined,
     threadTs: string,
   ): Promise<KnownBlock[]> {
     const agents = await this.workspaceCommands.availableAgents({

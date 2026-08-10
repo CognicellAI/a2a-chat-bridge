@@ -7,17 +7,17 @@ Complete [Get started](../getting-started.md) before connecting Discord.
 
 ## Choose a chat type
 
-| Where people collaborate         | Support                 | First action                                                       |
-| -------------------------------- | ----------------------- | ------------------------------------------------------------------ |
-| Bot direct message               | Supported               | Open a DM with the bot and use `/a2a` or ordinary text.            |
-| Public or private parent channel | Supported as a launcher | Run `/a2a session new ...`; the bridge creates a workspace thread. |
-| Thread below a configured parent | Supported               | Mention `@A2ABridge` to send requests.                             |
-| Group direct message             | Unsupported             | Discord bots cannot join group DMs.                                |
+| Where people collaborate         | Support                   | First action                                                       |
+| -------------------------------- | ------------------------- | ------------------------------------------------------------------ |
+| Bot direct message               | Supported when configured | Open a DM with the bot and use `/a2a` or ordinary text.            |
+| Public or private parent channel | Supported as a launcher   | Run `/a2a session new ...`; the bridge creates a workspace thread. |
+| Thread below a configured parent | Supported                 | Mention `@A2ABridge` to send requests.                             |
+| Group direct message             | Unsupported               | Discord bots cannot join group DMs.                                |
 
 ## Fastest first success
 
 1. Follow [Discord setup](setup.md) to create and install the bot, configure
-   its token, and, for shared workspaces, allowlist a parent channel.
+   its token, and allowlist the Agents available in private DMs or shared workspaces.
 2. Open a DM with the bot and run:
 
    ```text

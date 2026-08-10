@@ -145,7 +145,7 @@ describe("workspace command core", () => {
     ).resolves.toMatchObject({ kind: "session-selected" });
   });
 
-  it("selects the only configured agent on an unscoped direct surface", async () => {
+  it("selects the only Agent allowed by a direct-message policy", async () => {
     const state = new MemoryStateStore();
     await state.saveContact({
       id: "concierge-id",
@@ -164,7 +164,11 @@ describe("workspace command core", () => {
     await expect(
       commands.execute(
         { group: "agent", action: "current" },
-        { surface: { platform: "slack", kind: "dm", id: "D123" } },
+        {
+          surface: { platform: "slack", kind: "dm", id: "D123" },
+          agentAliases: ["concierge"],
+          defaultAgent: "concierge",
+        },
       ),
     ).resolves.toMatchObject({
       kind: "agent-current",

@@ -4,9 +4,9 @@
 
 ## 1:1 direct messages
 
-A DM is a private Agent and Session surface. Slack's native `/a2a` command
-supports the complete contract there, and ordinary text starts or continues the
-conversation:
+A DM is a private Agent and Session surface only when `directMessages` is
+configured. Slack's native `/a2a` command supports the complete contract there,
+and ordinary text starts or continues the conversation:
 
 ```text
 /a2a agent list

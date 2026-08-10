@@ -12,9 +12,11 @@ by platform; the commands and their meaning do not.
 | **Context ID** | A remote-agent-generated A2A identifier that groups related Tasks in one conversation.           |
 | **Task**       | A bridge-recorded unit of remote A2A work. The remote agent remains authoritative for its state. |
 
-A direct message is private to that conversation. A shared group DM or workspace
-thread has one selected agent and active Session for all its participants.
-Participants may select only agents allowed by the shared conversation policy.
+A direct message is private to that conversation. It is available only when the
+operator configures the cross-adapter `directMessages` policy; that policy limits
+which Agents its participants may use. A shared group DM or workspace thread has
+one selected Agent and active Session for all its participants. Participants may
+select only Agents allowed by the shared conversation policy.
 
 ## Commands
 
@@ -37,19 +39,20 @@ Starting a new Session does not cancel an already-running remote Task.
 
 ### Discord
 
-Use Discord's native `/a2a` command picker in a bot DM or eligible public/private
-thread. In an allowlisted parent channel, `/a2a session new` creates an A2A
-workspace thread. Inside a workspace thread, mention the bot to send an ordinary
-request to the selected agent.
+Use Discord's native `/a2a` command picker in a configured bot DM or eligible
+public/private thread. In an allowlisted parent channel, `/a2a session new`
+creates an A2A workspace thread. Inside a workspace thread, mention the bot to
+send an ordinary request to the selected agent.
 
 See [Discord integration and usage](discord/README.md).
 
 ### Slack
 
-Use the full native `/a2a` contract in a Slack DM or allowlisted group DM. In an
-allowlisted channel, use `agent list` or `session new [agent] [request]` to
-launch a workspace. Slack developer slash commands cannot run inside message
-threads. In a workspace thread, use its Block Kit header or mention the bot:
+Use the full native `/a2a` contract in a configured Slack App Home DM or
+allowlisted group DM. In an allowlisted channel, use `agent list` or `session new
+[agent] [request]` to launch a workspace. Slack developer slash commands cannot
+run inside message threads. In a workspace thread, use its Block Kit header or
+mention the bot:
 
 ```text
 @A2ABridge Summarize the options above.

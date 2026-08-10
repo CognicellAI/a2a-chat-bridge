@@ -13,7 +13,7 @@ import {
   type Message,
 } from "discord.js";
 import type { A2AConnector } from "../core/a2a-connector.js";
-import type { ChannelPolicy } from "../config.js";
+import type { ChannelPolicy, DirectMessagePolicy } from "../config.js";
 import type { ContactRegistry } from "../core/contacts.js";
 import type { RuntimeConfig } from "../core/runtime-config.js";
 import {
@@ -233,6 +233,10 @@ export class DiscordAdapter {
       );
   }
 
+  private directMessagePolicy(): DirectMessagePolicy | undefined {
+    return this.runtimeConfig.snapshot().config.directMessages;
+  }
+
   private isEligibleThread(channel: BaseChannel): channel is AnyThreadChannel {
     return channel.isThread() && this.threadPolicy(channel) !== undefined;
   }
@@ -241,10 +245,15 @@ export class DiscordAdapter {
     interaction: ChatInputCommandInteraction,
   ): CommandScope | undefined {
     if (!interaction.channel) return undefined;
-    if (interaction.channel.isDMBased())
+    if (interaction.channel.isDMBased()) {
+      const policy = this.directMessagePolicy();
+      if (!policy) return undefined;
       return {
         surface: { platform: "discord", kind: "dm", id: interaction.channelId },
+        agentAliases: policy.agents,
+        defaultAgent: policy.defaultAgent,
       };
+    }
     const policy = this.threadPolicy(interaction.channel);
     if (policy && this.isEligibleThread(interaction.channel))
       return {
@@ -300,7 +309,7 @@ export class DiscordAdapter {
   private async handle(message: Message): Promise<void> {
     if (message.author.bot) return;
     const policy = message.channel.isDMBased()
-      ? undefined
+      ? this.directMessagePolicy()
       : this.threadPolicy(message.channel);
     const surface = message.channel.isDMBased()
       ? this.surface(message)
@@ -308,6 +317,13 @@ export class DiscordAdapter {
         ? this.threadSurface(message.channel)
         : undefined;
     if (!surface) return;
+
+    if (!policy) {
+      await message.reply(
+        "A2A direct messages are disabled. Ask an operator to configure `directMessages`.",
+      );
+      return;
+    }
 
     const content =
       surface.kind === "thread"
@@ -369,7 +385,9 @@ export class DiscordAdapter {
     const scope = this.commandScope(interaction);
     if (!scope) {
       await interaction.reply(
-        "Use this command in a direct message, an allowlisted thread, or `/a2a session new` in an allowlisted channel.",
+        interaction.channel?.isDMBased()
+          ? "A2A direct messages are disabled. Ask an operator to configure `directMessages`."
+          : "Use this command in an allowlisted thread, or `/a2a session new` in an allowlisted channel.",
       );
       return;
     }
@@ -550,7 +568,7 @@ export class DiscordAdapter {
 
   private async selectedContact(
     surface: Surface,
-    policy?: ChannelPolicy,
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
   ): Promise<Contact | undefined> {
     return this.workspaceCommands.selectedAgent({
       surface,
@@ -620,7 +638,7 @@ export class DiscordAdapter {
   private async currentSession(
     interaction: ChatInputCommandInteraction,
     surface: Surface,
-    policy?: ChannelPolicy,
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
   ): Promise<Session | undefined> {
     const contact = await this.selectedContact(surface, policy);
     if (!contact) {
@@ -682,7 +700,9 @@ export class DiscordAdapter {
     );
   }
 
-  private async availableContacts(policy?: ChannelPolicy): Promise<Contact[]> {
+  private async availableContacts(
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
+  ): Promise<Contact[]> {
     return [
       ...(await this.workspaceCommands.availableAgents({
         surface: { platform: "discord", kind: "dm", id: "availability" },
@@ -694,7 +714,7 @@ export class DiscordAdapter {
 
   private async availableContact(
     id: string,
-    policy?: ChannelPolicy,
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
   ): Promise<Contact | undefined> {
     return this.workspaceCommands.availableAgent(id, {
       surface: { platform: "discord", kind: "dm", id: "availability" },

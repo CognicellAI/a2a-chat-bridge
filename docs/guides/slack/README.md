@@ -11,7 +11,7 @@ without a public HTTP endpoint.
 
 | Where people collaborate          | Support                   | First action                                                                        |
 | --------------------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| 1:1 direct message                | Supported                 | Open a DM with the app and use `/a2a` or ordinary text.                             |
+| 1:1 direct message                | Supported when configured | Open a DM with the app and use `/a2a` or ordinary text.                             |
 | Group direct message              | Supported when configured | Add its conversation ID to policy, then use `/a2a` or ordinary text.                |
 | Public or private channel         | Supported as a launcher   | Add it to policy, invite the app, then run `/a2a session new ...`.                  |
 | Thread below a configured channel | Supported                 | Mention `@A2ABridge` to request work; use the header or text commands for controls. |

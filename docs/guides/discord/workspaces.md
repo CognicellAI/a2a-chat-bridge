@@ -4,8 +4,9 @@
 
 ## Direct messages
 
-A bot DM is a private Agent and Session surface. Use Discord's native command
-picker for the complete `/a2a` contract, then send ordinary text:
+A bot DM is a private Agent and Session surface only when `directMessages` is
+configured. Use Discord's native command picker for the complete `/a2a`
+contract, then send ordinary text:
 
 ```text
 /a2a agent list

@@ -29,7 +29,8 @@ the app after a manifest or scope change.
 ## 3. Configure shared conversations
 
 1:1 DMs do not need a conversation-policy entry. Add every shared channel or
-group DM to `slack.conversations`:
+group DM to `slack.conversations`, and opt in to private App Home DMs with
+`directMessages`:
 
 ```yaml
 slack:
@@ -44,10 +45,14 @@ slack:
     - id: G0123456789
       agents: [concierge, researcher]
       defaultAgent: concierge
+directMessages:
+  agents: [concierge]
+  defaultAgent: concierge
 ```
 
-The policy limits agent selection; Slack membership controls who can participate.
-Invite the app to each configured channel or group DM before use.
+The policies limit Agent selection; Slack membership controls who can
+participate. Omit `directMessages` to disable private App Home DMs. Invite the
+app to each configured channel or group DM before use.
 
 ## 4. Find a conversation ID and start
 

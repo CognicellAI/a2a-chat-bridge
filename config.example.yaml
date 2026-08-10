@@ -5,6 +5,10 @@ discord:
 
 # Optional Slack Socket Mode adapter. Platform membership controls collaboration;
 # `agents` limits the remote agents a shared conversation may use.
+# Optional cross-adapter private bot-DM policy. Omit to disable private DMs.
+# directMessages:
+#   agents: [concierge]
+#   defaultAgent: concierge
 # slack:
 #   botTokenEnv: SLACK_BOT_TOKEN
 #   appTokenEnv: SLACK_APP_TOKEN
