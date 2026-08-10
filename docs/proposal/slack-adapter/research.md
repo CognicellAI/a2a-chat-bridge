@@ -14,3 +14,7 @@ Research captured 2026-08-09 from Slack's official documentation.
 
 These facts support the candidate Socket Mode shape. They do not settle the
 thread-context and authorization questions recorded as spikes.
+
+The follow-up [configuration research](research-slack-config.md) resolves the
+thread-command question and records the minimal first-proof scopes. Shared
+workspace mutator authorization remains open.

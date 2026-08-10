@@ -4,6 +4,9 @@ shaping: true
 
 # Slack interaction context — Spike
 
+**Status:** completed 2026-08-09. See
+[configuration research](research-slack-config.md#threads-commands-and-updates).
+
 ## Context
 
 Discord's native `/a2a` command runs in a known DM or thread Surface. Slack may
@@ -29,3 +32,10 @@ Surface.
 
 The spike is complete when we can describe safe, surface-specific invocation and
 response flows for every existing `/a2a` operation.
+
+## Findings
+
+Slack native slash commands cannot be invoked in message threads. The first
+proof will therefore use `@Bridge /a2a …` for thread controls and `@Bridge …`
+for requests; it retains the thread timestamp supplied by the `app_mention`
+event. A later Block Kit interaction may offer richer controls.

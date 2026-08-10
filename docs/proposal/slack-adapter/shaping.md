@@ -30,15 +30,15 @@ shaping: true
 Candidate first proof. A thin Slack adapter uses Bolt for JavaScript in Socket
 Mode, shares the portable core, and adopts the existing workspace policy.
 
-| Part   | Mechanism                                                                                                                                                      | Flag |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: |
-| **A1** | Add a Slack adapter that converts bot-DM events and `app_mention` events into portable text requests and renders batched A2A replies with Slack's message API. |  ⚠️  |
-| **A2** | Extend `Surface` with `slack:dm:<channel-id>` and `slack:thread:<channel-id>:<thread-ts>` keys; reuse the existing Session and Task stores.                    |      |
-| **A3** | Read hot-reloaded Slack channel policies that limit shared workspaces to configured channel IDs and configured Agent aliases.                                  |  ⚠️  |
-| **A4** | Require a bot mention for shared-thread ingress; strip the mention before forwarding text to A2A.                                                              |      |
-| **A5** | Resolve mutator authorization from Slack conversation and workspace roles before changing a thread's Contact or Session.                                       |  ⚠️  |
-| **A6** | Provide `/a2a` controls where Slack gives sufficient surface context; otherwise parse an explicit bot mention command in the target thread.                    |  ⚠️  |
-| **A7** | Add a Slack app manifest and concise installation guide with the minimal Socket Mode, event, and message scopes.                                               |  ⚠️  |
+| Part   | Mechanism                                                                                                                                                                                 | Flag |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: |
+| **A1** | Add a Slack adapter that converts bot-DM `message.im` events and shared-thread `app_mention` events into portable text requests and renders batched A2A replies with Slack's message API. |      |
+| **A2** | Extend `Surface` with `slack:dm:<channel-id>` and `slack:thread:<channel-id>:<thread-ts>` keys; reuse the existing Session and Task stores.                                               |      |
+| **A3** | Read hot-reloaded Slack channel policies that limit shared workspaces to configured channel IDs and configured Agent aliases.                                                             |      |
+| **A4** | Require a bot mention for shared-thread ingress; strip the mention before forwarding text to A2A.                                                                                         |      |
+| **A5** | Resolve mutator authorization from Slack conversation and workspace roles before changing a thread's Contact or Session.                                                                  |  ⚠️  |
+| **A6** | Parse `@Bridge /a2a …` in a shared thread for Contact, Session, and Task controls; do not use native Slack slash commands there.                                                          |      |
+| **A7** | Add a Slack app manifest and concise installation guide with `app_mentions:read`, `im:history`, `chat:write`, and Socket Mode's app-level token scope.                                    |      |
 
 ## B: HTTP-event adapter
 
@@ -50,25 +50,24 @@ Mode, shares the portable core, and adopts the existing workspace policy.
 
 | Req | Requirement                                                                                                                                                       | Status    |  A  |  B  |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | :-: | :-: |
-| R0  | A Slack user can use the same configured A2A Contacts from a DM or an eligible shared thread.                                                                     | Core goal | ❌  | ❌  |
+| R0  | A Slack user can use the same configured A2A Contacts from a DM or an eligible shared thread.                                                                     | Core goal | ✅  | ❌  |
 | R1  | A Slack Surface retains one selected Contact, active local Session, remote `contextId`, and bridge-recorded Task history without leaking them to another Surface. | Must-have | ✅  | ✅  |
 | R2  | A Slack shared thread is a visible shared workspace with one selected agent and Session, not interleaved personal contexts.                                       | Must-have | ✅  | ✅  |
 | R3  | Only explicitly authorized Slack participants can change the shared Contact or Session; permitted participants can invoke and inspect the selected agent.         | Must-have | ❌  | ❌  |
 | R4  | Unrelated Slack discussion is never sent to an agent implicitly.                                                                                                  | Must-have | ✅  | ✅  |
 | R5  | The first self-hosted deployment receives Slack events without opening an inbound public HTTP endpoint.                                                           | Must-have | ✅  | ❌  |
-| R6  | Slack-specific credentials stay in environment configuration; A2A credentials remain explicit per Agent and are never disclosed in Slack.                         | Must-have | ❌  | ❌  |
+| R6  | Slack-specific credentials stay in environment configuration; A2A credentials remain explicit per Agent and are never disclosed in Slack.                         | Must-have | ✅  | ❌  |
 | R7  | Existing Discord behavior and all remote A2A protocol semantics remain unchanged.                                                                                 | Must-have | ✅  | ✅  |
 
 **Notes:**
 
 - A is the intended first direction because it meets the self-hosted outbound
   transport requirement.
-- Both shapes remain incomplete until the flagged Slack authorization, command
-  context, scopes, and configuration mechanisms are spiked.
+- A remains incomplete until shared-thread mutator authorization is spiked.
+- B remains incomplete because it requires an inbound public HTTPS endpoint.
 
 ## Spikes required before selection
 
-| Spike                                                               | Goal                                                                                                               |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| [Slack interaction context](spike-interaction-context.md)           | Establish which Slack interaction payloads preserve a thread reference and how thread-scoped controls should work. |
-| [Slack authorization and scopes](spike-authorization-and-scopes.md) | Establish the minimum scopes and reliable workspace/channel authorization signal for the shared-workspace policy.  |
+| Spike                                                               | Goal                                                                                                              |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [Slack authorization and scopes](spike-authorization-and-scopes.md) | Establish the minimum scopes and reliable workspace/channel authorization signal for the shared-workspace policy. |

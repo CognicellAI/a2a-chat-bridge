@@ -4,7 +4,8 @@
 - **Author**: Herman Haggerty
 - **Created**: 2026-08-09
 - **Shaping**: [frame](frame.md), [working shape](shaping.md)
-- **Research**: [Slack transport notes](research.md)
+- **Research**: [Slack transport notes](research.md),
+  [Slack configuration](research-slack-config.md)
 - **ADR(s)**: —
 
 ## Problem
@@ -51,6 +52,6 @@ its metadata.
 
 ## Open questions
 
-See [shaping.md](shaping.md). In particular, the implementation spike must
-verify Slack thread context for slash commands before native command parity is
-promised.
+See [shaping.md](shaping.md). Native Slack slash commands cannot run in message
+threads, so thread controls use `@Bridge /a2a …`; shared-thread mutator
+authorization remains the key open design question.
