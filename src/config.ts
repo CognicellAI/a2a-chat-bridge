@@ -50,10 +50,7 @@ export interface ChannelPolicy {
   defaultAgent?: string;
 }
 
-export interface SlackChannelPolicy extends ChannelPolicy {
-  /** Slack user IDs allowed to change a shared thread's Contact or Session. */
-  mutators: readonly string[];
-}
+export type SlackChannelPolicy = ChannelPolicy;
 
 export interface Config {
   discord?: DiscordConfig;
@@ -176,19 +173,7 @@ const slackChannelPolicy = (
   raw: unknown,
   index: number,
 ): SlackChannelPolicy => {
-  const base = channelPolicy(raw, index);
-  const candidate = raw as { mutators?: unknown };
-  const mutators = stringList(
-    candidate.mutators,
-    `config.slack.channels[${index}].mutators`,
-  );
-  if (!mutators.length)
-    throw new Error(
-      `config.slack.channels[${index}].mutators must not be empty.`,
-    );
-  if (new Set(mutators).size !== mutators.length)
-    throw new Error(`config.slack.channels[${index}].mutators has duplicates.`);
-  return Object.freeze({ ...base, mutators });
+  return channelPolicy(raw, index);
 };
 
 const agent = (raw: unknown, index: number): ConfiguredAgent => {

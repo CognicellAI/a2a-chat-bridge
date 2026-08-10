@@ -1,6 +1,6 @@
 # ADR-0009: Public Discord thread workspaces
 
-- **Status**: accepted
+- **Status**: superseded by [ADR-0017](0017-native-platform-collaboration.md)
 - **Date**: 2026-08-09
 - **Proposal**: [discord-thread-workspaces](../proposal/discord-thread-workspaces/README.md)
 

@@ -1,50 +1,11 @@
-# Operate the bridge
+# Operations and troubleshooting
 
-Use native Discord commands under `/a2a`. A Contact is a configured remote A2A
-agent; a Session retains one remote `contextId`; a Task is bridge-recorded remote
-work.
+**Audience:** an operator running the bridge in development or Docker Compose.
 
-## Discord workflow
+For platform installation and workspace use, see [Discord](discord/README.md) or
+[Slack](slack/README.md). For `/a2a` behavior, see the [command reference](commands.md).
 
-| Goal                                      | Command                                      |
-| ----------------------------------------- | -------------------------------------------- |
-| List or select an agent                   | `/a2a contact list`, `/a2a contact use`      |
-| Show selected agent and Agent Card        | `/a2a contact current`                       |
-| Start, inspect, list, or resume a Session | `/a2a session new`, `current`, `list`, `use` |
-| Inspect recorded Tasks                    | `/a2a task current`, `list`, `status`        |
-
-With one configured Contact, the bridge selects it automatically. Otherwise,
-select one before sending a message. Selections are memory-only and must be made
-again after restart when multiple Contacts exist.
-
-`/a2a session new` starts a fresh remote conversation; it does not cancel
-already-running Tasks. `/a2a task status` refreshes a known Task with `GetTask`.
-
-## Shared public threads
-
-In a public thread below a configured channel policy, mention the bot to invoke
-the selected agent. `/a2a contact list` shows only that policy's Agents and
-`/a2a contact use` cannot select any other Agent. The Contact, Session,
-`contextId`, and Task list are shared by the thread.
-
-When a new shared Session starts, the bridge posts an **A2A workspace** message
-with the Agent, Session ID, and the bot mention to use.
-
-- Thread starter or `Manage Threads`: select Contact; start or resume Session.
-- Any participant: mention the bot; inspect Contact, Session, or Task metadata.
-
-Root channels, private threads, and unmentioned thread messages are ignored.
-
-## Slack
-
-Slack DMs follow the same Contact, Session, and Task workflow using text
-controls such as `/a2a contact list`. In an eligible Slack channel,
-`/a2a agents` lists permitted agents and `/a2a start [agent] <request>` creates
-a shared workspace thread. In that thread, prefix agent requests and controls
-with a bot mention: `@Bridge request` or `@Bridge /a2a contact list`. Only the
-channel policy's `mutators` may change a shared Slack thread's Contact or Session.
-
-## Run and check health
+## Check service health
 
 ```sh
 docker compose up --build -d
@@ -52,24 +13,53 @@ docker compose ps
 docker compose logs --tail=100 bridge
 ```
 
-Healthy startup logs `Connected to Discord as …` and `Registered /a2a Discord
-application command.` Compose uses no inbound ports and preserves state in its
-named volume. Stop it with `docker compose down`.
+A healthy service logs one connection line for each enabled adapter:
+
+```text
+Connected to Discord as …
+Registered /a2a Discord application command.
+Connected to Slack through Socket Mode.
+```
+
+Compose publishes no inbound ports and preserves local bridge metadata in its
+named volume. Stop the service with `docker compose down`; the named volume
+remains unless you explicitly remove it.
+
+## Daily operator tasks
+
+| Goal                                        | Action                                                                                        |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Add or change an approved agent             | Update `config.yaml` atomically; valid agent and channel-policy changes reload automatically. |
+| Change token variable names or state path   | Update configuration, then restart the bridge.                                                |
+| Inspect the active agent, Session, or Tasks | Use the appropriate `/a2a` command from [the command reference](commands.md).                 |
+| Check an A2A failure                        | Confirm the selected agent, credentials, Agent Card, and remote-agent logs.                   |
+| Recover from a stopped container            | Start Compose again; local Session and Task metadata returns from the named volume.           |
+
+## A2A task recovery
+
+On restart, the bridge attempts to resubscribe only to recorded in-flight A2A
+Tasks. Task resubscription is optional in A2A. If a remote agent does not
+support it, the bridge logs one informational summary and does not post a stale
+“resuming” message into chat.
+
+Use `/a2a task status <task>` to refresh a recorded Task directly.
 
 ## Troubleshooting
 
-| Symptom                              | Action                                                                                                                                                 |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Bot ignores a DM                     | Confirm a Contact is selected and send ordinary text.                                                                                                  |
-| Bot ignores a thread message         | Use a configured public thread and mention the bot.                                                                                                    |
-| `/a2a` missing                       | Confirm registration in logs, then reopen Discord's command picker.                                                                                    |
-| Agent request fails                  | Check `/a2a contact current`, credentials, and remote-agent logs.                                                                                      |
-| Task recovery unavailable on restart | The agent lacks optional task resubscription; the bridge logs one info summary, stops retrying those Tasks, and posts nothing. Use `/a2a task status`. |
-| Context reset                        | Confirm `stateFile` is stable and writable.                                                                                                            |
+| Symptom                               | Action                                                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Bridge will not start                 | Validate `config.yaml`, required token environment variables, and file access to `stateFile`.                                 |
+| Agent request fails                   | Use `/a2a agent current`, then verify the exact Agent Card URL, configured auth mode, and remote-agent logs.                  |
+| Context appears reset                 | Confirm that the configured `stateFile` or Docker named volume persists across restarts.                                      |
+| No commands or replies on one adapter | Follow its adapter-specific checks: [Discord](discord/README.md#troubleshooting) or [Slack](slack/README.md#troubleshooting). |
+| Task recovery unavailable             | The remote agent does not implement optional resubscription. Use `/a2a task status` for a direct refresh.                     |
 
-Never paste `config.yaml`, tokens, or client secrets into chat or logs.
+Never paste `config.yaml`, bot tokens, app tokens, access tokens, or client
+secrets into chat or logs.
 
-## More detail
+## Related guides
 
 - [Get started](getting-started.md)
 - [Configuration reference](configuration.md)
+- [Discord integration and usage](discord/README.md)
+- [Slack integration and usage](slack/README.md)

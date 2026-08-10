@@ -6,8 +6,8 @@ features:
     always_online: true
   slash_commands:
     - command: /a2a
-      description: Start or manage an A2A agent workspace
-      usage_hint: start [agent] <request> | agents
+      description: Launch an A2A agent workspace
+      usage_hint: session new [agent] [request] | agent list
       should_escape: false
 oauth_config:
   scopes:
@@ -17,6 +17,8 @@ oauth_config:
       - commands
       - im:history
 settings:
+  interactivity:
+    is_enabled: true
   event_subscriptions:
     bot_events:
       - app_mention

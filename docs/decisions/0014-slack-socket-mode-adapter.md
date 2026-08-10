@@ -1,6 +1,6 @@
 # ADR-0014: Slack Socket Mode adapter
 
-- **Status**: accepted
+- **Status**: superseded by [ADR-0017](0017-native-platform-collaboration.md)
 - **Date**: 2026-08-10
 - **Proposal**: [slack-adapter](../proposal/slack-adapter/README.md)
 

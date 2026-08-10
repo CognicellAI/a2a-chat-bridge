@@ -1,8 +1,8 @@
 {
   "name": "a2a-chat-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "A self-hosted Discord client for remote A2A v1.0 agents.",
+  "description": "A self-hosted Discord and Slack bridge for remote A2A v1.0 agents.",
   "author": "Herman Haggerty",
   "license": "Apache-2.0",
   "homepage": "https://cognicellai.com/",
@@ -17,6 +17,7 @@
     "a2a",
     "agents",
     "discord",
+    "slack",
     "self-hosted"
   ],
   "type": "module",

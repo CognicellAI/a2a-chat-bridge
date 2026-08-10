@@ -1,6 +1,6 @@
 # ADR-0015: Native Slack command launcher
 
-- **Status**: accepted
+- **Status**: superseded by [ADR-0016](0016-cross-platform-command-parity.md)
 - **Date**: 2026-08-10
 - **Proposal**: [slack-adapter](../proposal/slack-adapter/README.md)
 

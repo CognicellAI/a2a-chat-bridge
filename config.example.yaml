@@ -3,8 +3,8 @@ discord:
   # Optional: parent channels and the Agent aliases their public threads may use.
   channels: []
 
-# Optional Slack Socket Mode adapter. Shared thread workspace changes require a
-# Slack user ID in mutators; DMs do not.
+# Optional Slack Socket Mode adapter. Channel membership controls collaboration;
+# `agents` limits the remote agents a shared workspace may use.
 # slack:
 #   botTokenEnv: SLACK_BOT_TOKEN
 #   appTokenEnv: SLACK_APP_TOKEN
@@ -12,7 +12,6 @@ discord:
 #     - id: C0123456789
 #       agents: [concierge]
 #       defaultAgent: concierge
-#       mutators: [U0123456789]
 stateFile: ./data/state.json
 editIntervalMs: 1200
 pollIntervalMs: 1500
