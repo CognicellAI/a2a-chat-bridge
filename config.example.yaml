@@ -21,8 +21,8 @@ editIntervalMs: 1200
 pollIntervalMs: 1500
 configReloadIntervalMs: 2000
 
-# This local file is the Contact allowlist. The bridge validates and reloads
-# Contacts, aliases, and credentials without interrupting an in-flight response.
+# This local file is the Agent allowlist. The bridge validates and reloads
+# Agents, aliases, and credentials without interrupting an in-flight response.
 # Changes to timing, stateFile, or tokenEnv require a restart. Keep real client
 # secrets out of Git.
 # Replace [] with a list like this to configure an agent:

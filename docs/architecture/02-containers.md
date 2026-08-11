@@ -10,7 +10,8 @@ state, and attachment-only config ([ADR-0001](../decisions/0001-chat-bridge-as-c
 [ADR-0010](../decisions/0010-explicit-per-agent-authentication.md),
 [ADR-0011](../decisions/0011-channel-agent-policies.md),
 [ADR-0018](../decisions/0018-conversation-surface-coverage.md),
-[ADR-0019](../decisions/0019-direct-message-agent-policy.md)).
+[ADR-0019](../decisions/0019-direct-message-agent-policy.md),
+[ADR-0020](../decisions/0020-explicit-workspace-launch-command.md)).
 
 ```mermaid
 C4Container

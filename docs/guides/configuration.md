@@ -71,8 +71,9 @@ falls back from one mode to another.
 
 ## Discord shared workspaces
 
-Leave `channels` empty for DMs only. Each entry enables public or private threads below one
-parent and restricts them to its configured Agent aliases:
+Leave `channels` empty for Discord DMs only. Each entry enables public or
+private threads below one parent and restricts them to its configured agent
+aliases:
 
 ```yaml
 discord:
@@ -84,18 +85,19 @@ discord:
 
 `agents` is required and must name configured aliases; `defaultAgent` is
 optional and must appear in `agents`. Any eligible-thread participant may change
-the agent or Session within this allowlist. Root-channel and unmentioned thread
-messages are ignored. Discord group DMs are unavailable to bots. See [Discord integration and usage](discord/README.md)
-for permissions and workflow.
+the agent or Session within this allowlist. Root-channel messages and thread
+messages without an explicit bridge mention are ignored. Discord group DMs are
+unavailable to bots. See [Discord integration and usage](discord/README.md) for
+permissions and workflow.
 
 ## Reload and state
 
 Save a complete replacement of `config.yaml`; a valid file takes effect at the
-next reload check. Contacts, aliases, authentication, and channel policies
+next reload check. Agents, aliases, authentication, and conversation policies
 reload. The token variable, state path, and timing settings require a restart.
 
-The state file is rebuildable metadata only. Removing it forgets local Contacts,
-Sessions, and Task records; it does not cancel remote A2A work.
+The state file is rebuildable metadata only. Removing it forgets locally cached
+agent records, Sessions, and Task records; it does not cancel remote A2A work.
 
 For Docker, Compose mounts local `config.yaml` read-only at `/app/config.yaml`.
 
@@ -103,10 +105,10 @@ For Docker, Compose mounts local `config.yaml` read-only at `/app/config.yaml`.
 
 Slack is optional. It uses `SLACK_BOT_TOKEN` plus a separate Socket Mode
 `SLACK_APP_TOKEN`; keep both in `.env`, never in this file. Slack DMs support
-the full native command contract and ordinary text. In an allowlisted Slack channel,
-`/a2a workspace start [agent] [request]` creates a shared workspace thread. In that
-thread, mention the bot for an agent request or send `@A2ABridge /a2a …` for
-controls.
+the full native command contract and ordinary text. In an allowlisted Slack
+channel, `/a2a workspace start [agent] [request]` creates a shared workspace
+thread. In that thread, use the Block Kit header for controls, or mention the
+bot for an agent request or a text-command fallback.
 
 ```yaml
 slack:
@@ -127,10 +129,9 @@ requires an app token with `connections:write`. Import
 [`app-manifest.yaml`](slack/app-manifest.yaml) or register `/a2a` in the Slack
 app settings, then reinstall the app.
 
-Use `/a2a workspace start [agent] [request]` to create a workspace thread. Mention
-the bot there to send work to its shared Session. The Block Kit header identifies
-the selected agent and Session. All participants can invoke the agent, inspect
-Tasks, and change the workspace within its configured agent allowlist.
+The Block Kit header identifies the selected agent and Session. All participants
+can invoke the agent, inspect Tasks, and change the workspace within its
+configured agent allowlist.
 
 For manifest import, token creation, workspace launch, and Slack-specific
 troubleshooting, see [Slack integration and usage](slack/README.md).

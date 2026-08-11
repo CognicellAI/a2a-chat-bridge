@@ -8,11 +8,15 @@
 2. Install it in the server where it will be used. Include the `bot` and
    `applications.commands` installation scopes.
 3. Grant the bot these permissions in every workspace parent channel:
-   **View Channel**, **Send Messages**, **Create Public Threads**, **Create
-   Private Threads** when used, and **Send Messages in Threads**.
+   **View Channel**, **Send Messages**, **Create Public Threads**, and **Send
+   Messages in Threads**.
 
 The bridge does not require Discord's privileged Message Content intent. It
 registers `/a2a` at startup.
+
+`/a2a workspace start` creates a public thread. The bridge can also work in an
+existing private thread below an allowlisted parent, but Discord must add the
+bot to that private thread before it can see or reply there.
 
 ## 2. Configure the bridge
 

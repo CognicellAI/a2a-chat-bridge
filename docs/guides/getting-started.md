@@ -3,8 +3,9 @@
 **Audience:** a self-hosting operator. **Time:** about 15 minutes before
 platform-app setup.
 
-This guide installs the bridge and configures one remote A2A agent. Then choose
-[Discord](discord/README.md) or [Slack](slack/README.md) to connect a chat platform.
+This guide installs the bridge and configures one remote A2A agent. After it is
+running, choose [Discord](discord/README.md) or [Slack](slack/README.md) to
+connect a chat platform and make your first request.
 
 ## Prerequisites
 
@@ -13,8 +14,8 @@ This guide installs the bridge and configures one remote A2A agent. Then choose
 - An A2A agent's exact Agent Card URL. Do not append or remove discovery-path
   segments from the URL supplied by the agent operator.
 - The agent's required authentication material, if its Agent Card requires it.
-- A Discord bot token, a Slack bot token and app token, or both—depending on the
-  adapters you enable.
+- A Discord bot token, a Slack bot token and app token, or both—depending on
+  the adapters you enable.
 
 ## 1. Create private configuration
 
@@ -77,7 +78,7 @@ docker compose logs --tail=100 bridge
 
 Compose stores bridge metadata in its named volume. Local development uses the
 `stateFile` you configured. That metadata contains local agent, Session, and
-Task references—not remote agent work itself.
+Task references—not the remote agent's work or memory.
 
 ## 4. Verify startup
 
@@ -93,6 +94,11 @@ Next, finish platform integration:
 
 - [Connect Discord](discord/README.md)
 - [Connect Slack](slack/README.md)
+
+Once an adapter is connected, use its guide to choose the right chat type. In a
+shared channel, start a workspace with `/a2a workspace start [agent] [request]`.
+In an enabled DM or an existing workspace thread, start or switch Sessions with
+`/a2a session …`.
 
 ## Next steps
 

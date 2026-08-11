@@ -25,11 +25,11 @@ common command reference, and adapter-native guides for
    app, then export its token environment variables.
 4. Run `bun run dev`.
 
-Configured agents are fetched and cached automatically. Use native Discord
-commands or Slack's `/a2a` launcher to create a workspace. Normal DM messages
-become A2A messages in the active local Session, which retains the remote
-`contextId`. In an enabled thread, mention the bridge bot to send a
-message to its shared agent workspace.
+Configured agents are fetched and cached automatically. In an allowlisted
+parent channel, use `/a2a workspace start` to create a workspace. In an enabled
+DM, normal messages become A2A messages in the active local Session, which
+retains the remote `contextId`. In an enabled thread, mention the bridge bot to
+send a message to its shared agent workspace.
 
 | Need                                      | Shared command                                  |
 | ----------------------------------------- | ----------------------------------------------- |

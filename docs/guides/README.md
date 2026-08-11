@@ -4,9 +4,9 @@
 invite into its workspaces.
 
 The bridge connects approved remote A2A agents to Discord and Slack. It does not
-host, route, or inspect the internal memory of those agents. A conversation
-policy limits which configured agents a shared workspace may use; Discord and
-Slack retain control of membership and administration.
+host agents or inspect their internal memory. A conversation policy limits which
+configured agents a shared workspace may use; Discord and Slack retain control
+of membership and administration.
 
 ## Start here
 

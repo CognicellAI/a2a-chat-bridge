@@ -36,6 +36,10 @@ Use native `/a2a` commands inside the thread to inspect or change the shared
 workspace. Everyone in the thread shares the selected agent and active Session;
 the bridge posts an audit update when either changes.
 
+To use an existing private thread, add the bot to that thread first. Being able
+to view its parent channel alone does not grant the bot access to a private
+thread.
+
 ## Interaction rules
 
 - The bridge ignores root-channel messages and unmentioned thread messages.
@@ -46,10 +50,10 @@ the bridge posts an audit update when either changes.
 
 ## Troubleshooting
 
-| Symptom                              | Check                                                                                    |
-| ------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `/a2a` is missing                    | Confirm the command-registration log, then reopen the command picker.                    |
-| Bot cannot create a workspace thread | Grant the appropriate **Create … Threads** and **Send Messages in Threads** permissions. |
-| Bot ignores a thread request         | Use an accessible thread below a configured parent and mention `@A2ABridge`.             |
-| Agent is unavailable                 | Run `/a2a agent list`; the alias must be configured and allowed by the parent channel.   |
-| A2A request fails                    | Run `/a2a agent current`, verify credentials, then inspect remote-agent logs.            |
+| Symptom | Check |
+| --- | --- |
+| `/a2a` is missing | Confirm the command-registration log, then reopen the command picker. |
+| Bot cannot create a workspace thread | Grant **Create Public Threads** and **Send Messages in Threads**. |
+| Bot ignores a thread request | Use a thread below a configured parent, add the bot if it is private, and mention `@A2ABridge`. |
+| Agent is unavailable | Run `/a2a agent list`; the alias must be configured and allowed by the parent channel. |
+| A2A request fails | Run `/a2a agent current`, verify credentials, then inspect remote-agent logs. |
