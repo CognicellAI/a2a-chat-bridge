@@ -50,10 +50,10 @@ thread.
 
 ## Troubleshooting
 
-| Symptom | Check |
-| --- | --- |
-| `/a2a` is missing | Confirm the command-registration log, then reopen the command picker. |
-| Bot cannot create a workspace thread | Grant **Create Public Threads** and **Send Messages in Threads**. |
-| Bot ignores a thread request | Use a thread below a configured parent, add the bot if it is private, and mention `@A2ABridge`. |
-| Agent is unavailable | Run `/a2a agent list`; the alias must be configured and allowed by the parent channel. |
-| A2A request fails | Run `/a2a agent current`, verify credentials, then inspect remote-agent logs. |
+| Symptom                              | Check                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `/a2a` is missing                    | Confirm the command-registration log, then reopen the command picker.                           |
+| Bot cannot create a workspace thread | Grant **Create Public Threads** and **Send Messages in Threads**.                               |
+| Bot ignores a thread request         | Use a thread below a configured parent, add the bot if it is private, and mention `@A2ABridge`. |
+| Agent is unavailable                 | Run `/a2a agent list`; the alias must be configured and allowed by the parent channel.          |
+| A2A request fails                    | Run `/a2a agent current`, verify credentials, then inspect remote-agent logs.                   |
