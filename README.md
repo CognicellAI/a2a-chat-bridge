@@ -1,10 +1,25 @@
 # a2a-chat-bridge
 
-A self-hosted, single-tenant Discord and Slack bridge for remote A2A v1.0
-agents. It is a handset: agents are explicitly configured by exact Agent Card
-URL and no agent is auto-routed or hosted by this application. It supports
-private DMs, shared Slack group DMs, and shared thread workspaces below
-operator-allowlisted parent channels.
+a2a-chat-bridge is a private, self-hosted A2A v1.0 client for Discord and
+Slack. It lets teams talk to remote A2A-compatible agents from familiar chat
+spaces while keeping agent selection and access explicit.
+
+An operator configures each remote agent by its exact A2A Agent Card URL. The
+Agent Card describes the agent's identity, endpoint, capabilities, and
+authentication requirements; it does not import or host the agent in the
+bridge. The agent's models, tools, memory, and business logic remain in its own
+external runtime.
+
+The bridge applies three layers of control: it knows only configured agents;
+each chat surface exposes only its approved agents; and each DM, group DM, or
+workspace thread has one explicitly selected agent. The bridge does not inspect
+a message and autonomously decide which agent should receive it.
+
+Using A2A, the bridge sends requests to the selected remote agent, streams or
+polls for responses, and records local references to remote conversation
+contexts and long-running Tasks. Your organization operates the bridge, retains
+its configuration and credentials, and controls which Discord and Slack spaces
+can use each agent.
 
 Maintained by [CognicellAI](https://cognicellai.com/) and released under the
 [Apache-2.0 License](LICENSE).
