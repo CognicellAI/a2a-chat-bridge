@@ -2,6 +2,26 @@
 
 All notable changes are recorded here.
 
+## [0.2.0] - 2026-08-10
+
+### Added
+
+- Slack Socket Mode support, including native `/a2a` workspace launch, shared
+  Slack DMs/group DMs, shared Slack threads, and Block Kit workspace controls.
+- One cross-platform `/a2a` command contract for agents, Sessions, remote
+  `contextId`, and Task metadata.
+- Adapter-native operator guides, a shared command reference, and an
+  importable Slack app manifest.
+
+### Changed
+
+- Shared workspaces now use platform-native membership for collaboration while
+  conversation policy limits the approved agents.
+- Discord public/private threads inherit their parent-channel policy; Discord
+  group DMs remain unavailable to bots.
+- User-facing commands and guides use **agent**; Contact remains an internal
+  domain term.
+
 ## [0.1.0] - 2026-08-09
 
 ### Added

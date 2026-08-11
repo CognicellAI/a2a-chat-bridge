@@ -1,22 +1,27 @@
 import {
   ApplicationIntegrationType,
-  ChannelType,
   Client,
   Events,
   GatewayIntentBits,
   InteractionContextType,
   Partials,
-  PermissionFlagsBits,
   SlashCommandBuilder,
+  ThreadAutoArchiveDuration,
   type AnyThreadChannel,
   type BaseChannel,
   type ChatInputCommandInteraction,
   type Message,
 } from "discord.js";
 import type { A2AConnector } from "../core/a2a-connector.js";
-import type { ChannelPolicy } from "../config.js";
+import type { ChannelPolicy, DirectMessagePolicy } from "../config.js";
 import type { ContactRegistry } from "../core/contacts.js";
 import type { RuntimeConfig } from "../core/runtime-config.js";
+import {
+  type CommandResult,
+  type CommandScope,
+  type WorkspaceCommand,
+  WorkspaceCommands,
+} from "../core/workspace-commands.js";
 import type { ReplySink, StateStore } from "../core/ports.js";
 import type {
   Contact,
@@ -37,7 +42,7 @@ const a2aCommand = new SlashCommandBuilder()
   .setContexts(InteractionContextType.BotDM, InteractionContextType.Guild)
   .addSubcommandGroup((group) =>
     group
-      .setName("contact")
+      .setName("agent")
       .setDescription("Inspect or select remote agents")
       .addSubcommand((command) =>
         command.setName("list").setDescription("List available A2A agents"),
@@ -61,10 +66,37 @@ const a2aCommand = new SlashCommandBuilder()
   )
   .addSubcommandGroup((group) =>
     group
+      .setName("workspace")
+      .setDescription("Start a shared A2A workspace")
+      .addSubcommand((command) =>
+        command
+          .setName("start")
+          .setDescription("Create a collaborative A2A workspace thread")
+          .addStringOption((option) =>
+            option
+              .setName("agent")
+              .setDescription("Optional configured agent alias"),
+          )
+          .addStringOption((option) =>
+            option
+              .setName("request")
+              .setDescription("Optional first request for the workspace"),
+          ),
+      ),
+  )
+  .addSubcommandGroup((group) =>
+    group
       .setName("session")
       .setDescription("Manage the selected agent session")
       .addSubcommand((command) =>
-        command.setName("new").setDescription("Start a fresh A2A conversation"),
+        command
+          .setName("new")
+          .setDescription("Start a fresh A2A conversation")
+          .addStringOption((option) =>
+            option
+              .setName("agent")
+              .setDescription("Optional configured agent alias"),
+          ),
       )
       .addSubcommand((command) =>
         command
@@ -140,7 +172,6 @@ export class DiscordAdapter {
     ],
     partials: [Partials.Channel],
   });
-  private readonly selectedContactBySurface = new Map<string, string>();
 
   public constructor(
     private readonly token: string,
@@ -148,6 +179,7 @@ export class DiscordAdapter {
     private readonly contacts: ContactRegistry,
     private readonly connector: A2AConnector,
     private readonly runtimeConfig: RuntimeConfig,
+    private readonly workspaceCommands: WorkspaceCommands,
   ) {}
 
   async start(): Promise<void> {
@@ -208,17 +240,16 @@ export class DiscordAdapter {
   }
 
   private threadPolicy(channel: BaseChannel): ChannelPolicy | undefined {
-    if (
-      !channel.isThread() ||
-      channel.type !== ChannelType.PublicThread ||
-      channel.parentId === null
-    )
-      return undefined;
+    if (!channel.isThread() || channel.parentId === null) return undefined;
     return this.runtimeConfig
       .snapshot()
       .config.discord?.channels.find(
         (policy) => policy.id === channel.parentId,
       );
+  }
+
+  private directMessagePolicy(): DirectMessagePolicy | undefined {
+    return this.runtimeConfig.snapshot().config.directMessages;
   }
 
   private isEligibleThread(channel: BaseChannel): channel is AnyThreadChannel {
@@ -227,45 +258,34 @@ export class DiscordAdapter {
 
   private commandScope(
     interaction: ChatInputCommandInteraction,
-  ): { surface: Surface; policy?: ChannelPolicy } | undefined {
+  ): CommandScope | undefined {
     if (!interaction.channel) return undefined;
-    if (interaction.channel.isDMBased())
+    if (interaction.channel.isDMBased()) {
+      const policy = this.directMessagePolicy();
+      if (!policy) return undefined;
       return {
         surface: { platform: "discord", kind: "dm", id: interaction.channelId },
+        agentAliases: policy.agents,
+        defaultAgent: policy.defaultAgent,
       };
+    }
     const policy = this.threadPolicy(interaction.channel);
     if (policy && this.isEligibleThread(interaction.channel))
-      return { surface: this.threadSurface(interaction.channel), policy };
+      return {
+        surface: this.threadSurface(interaction.channel),
+        agentAliases: policy.agents,
+        defaultAgent: policy.defaultAgent,
+      };
     return undefined;
   }
 
-  private canMutate(
-    interaction: ChatInputCommandInteraction,
-    surface: Surface,
-  ): boolean {
-    if (surface.kind === "dm") return true;
-    const channel = interaction.channel;
-    return (
-      channel !== null &&
-      "isThread" in channel &&
-      channel.isThread() &&
-      this.isEligibleThread(channel) &&
-      (channel.ownerId === interaction.user.id ||
-        interaction.memberPermissions?.has(
-          PermissionFlagsBits.ManageThreads,
-        ) === true)
-    );
-  }
-
-  private async requireMutationPermission(
-    interaction: ChatInputCommandInteraction,
-    surface: Surface,
-  ): Promise<boolean> {
-    if (this.canMutate(interaction, surface)) return true;
-    await interaction.reply(
-      "Only this thread's starter or a member with **Manage Threads** can change its A2A agent or Session.",
-    );
-    return false;
+  private parentChannelPolicy(
+    channel: ChatInputCommandInteraction["channel"],
+  ): ChannelPolicy | undefined {
+    if (!channel || channel.isDMBased() || channel.isThread()) return undefined;
+    return this.runtimeConfig
+      .snapshot()
+      .config.discord?.channels.find((policy) => policy.id === channel.id);
   }
 
   private replySink(message: Message, contact: Contact): ReplySink {
@@ -304,7 +324,7 @@ export class DiscordAdapter {
   private async handle(message: Message): Promise<void> {
     if (message.author.bot) return;
     const policy = message.channel.isDMBased()
-      ? undefined
+      ? this.directMessagePolicy()
       : this.threadPolicy(message.channel);
     const surface = message.channel.isDMBased()
       ? this.surface(message)
@@ -312,6 +332,13 @@ export class DiscordAdapter {
         ? this.threadSurface(message.channel)
         : undefined;
     if (!surface) return;
+
+    if (!policy) {
+      await message.reply(
+        "A2A direct messages are disabled. Ask an operator to configure `directMessages`.",
+      );
+      return;
+    }
 
     const content =
       surface.kind === "thread"
@@ -322,7 +349,7 @@ export class DiscordAdapter {
     const contact = await this.selectedContact(surface, policy);
     if (!contact) {
       await message.reply(
-        "No A2A agent is selected. Use `/a2a contact list` in Discord's command picker.",
+        "No A2A agent is selected. Use `/a2a agent list` in Discord's command picker.",
       );
       return;
     }
@@ -352,209 +379,238 @@ export class DiscordAdapter {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     if (interaction.commandName !== "a2a") return;
+    const group = interaction.options.getSubcommandGroup(true);
+    const command = interaction.options.getSubcommand(true);
+    const workspaceCommand = this.discordCommand(group, command, interaction);
+    if (!workspaceCommand) {
+      await interaction.reply("Invalid A2A command.");
+      return;
+    }
+
+    const parentPolicy = this.parentChannelPolicy(interaction.channel);
+    if (
+      parentPolicy &&
+      workspaceCommand.group === "workspace" &&
+      workspaceCommand.action === "start"
+    ) {
+      await this.launchWorkspace(interaction, parentPolicy, workspaceCommand);
+      return;
+    }
+    if (workspaceCommand.group === "workspace") {
+      await interaction.reply(
+        "Start a workspace from an allowlisted parent channel with `/a2a workspace start [agent] [request]`.",
+      );
+      return;
+    }
+
     const scope = this.commandScope(interaction);
     if (!scope) {
       await interaction.reply(
-        "Use this command in a direct message or an allowlisted public thread.",
+        interaction.channel?.isDMBased()
+          ? "A2A direct messages are disabled. Ask an operator to configure `directMessages`."
+          : "Use this command in an allowlisted thread, or `/a2a workspace start` in an allowlisted channel.",
       );
       return;
     }
-    const { surface, policy } = scope;
+    const result = await this.workspaceCommands.execute(
+      workspaceCommand,
+      scope,
+    );
+    await interaction.reply(
+      this.renderCommandResult(
+        result,
+        scope.surface,
+        interaction.user.username,
+      ),
+    );
+  }
 
-    const group = interaction.options.getSubcommandGroup(true);
-    const command = interaction.options.getSubcommand(true);
-    if (group === "contact" && command === "list") {
-      const contacts = await this.availableContacts(policy);
+  private discordCommand(
+    group: string,
+    action: string,
+    interaction: ChatInputCommandInteraction,
+  ): WorkspaceCommand | undefined {
+    if (group === "agent") {
+      if (action === "list" || action === "current") return { group, action };
+      if (action === "use")
+        return {
+          group,
+          action,
+          agent: interaction.options.getString("agent", true),
+        };
+    }
+    if (group === "workspace" && action === "start") {
+      const values = [
+        interaction.options.getString("agent"),
+        interaction.options.getString("request"),
+      ].filter((value): value is string => value !== null);
+      return { group, action, arguments: values };
+    }
+    if (group === "session") {
+      if (action === "new") {
+        return {
+          group,
+          action,
+          agent: interaction.options.getString("agent") ?? undefined,
+        };
+      }
+      if (action === "current" || action === "list") return { group, action };
+      if (action === "use")
+        return {
+          group,
+          action,
+          session: interaction.options.getString("session", true),
+        };
+    }
+    if (group === "task") {
+      if (action === "current" || action === "list") return { group, action };
+      if (action === "status")
+        return {
+          group,
+          action,
+          task: interaction.options.getString("task", true),
+        };
+    }
+    return undefined;
+  }
+
+  private async launchWorkspace(
+    interaction: ChatInputCommandInteraction,
+    policy: ChannelPolicy,
+    command: Extract<WorkspaceCommand, { group: "workspace"; action: "start" }>,
+  ): Promise<void> {
+    const channel = interaction.channel;
+    if (!channel || channel.isThread() || !("threads" in channel)) {
       await interaction.reply(
-        contacts.length
-          ? contacts
+        "This channel cannot create an A2A workspace thread.",
+      );
+      return;
+    }
+    const thread = await channel.threads.create({
+      name: "A2A workspace",
+      autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
+      reason: `A2A workspace requested by ${interaction.user.id}`,
+    });
+    const scope: CommandScope = {
+      surface: this.threadSurface(thread),
+      agentAliases: policy.agents,
+      defaultAgent: policy.defaultAgent,
+    };
+    const result = await this.workspaceCommands.execute(command, scope);
+    if (result.kind !== "session-new") {
+      await interaction.reply(this.renderCommandResult(result, scope.surface));
+      return;
+    }
+    await thread.send(
+      `${this.workspaceIntro(result.agent, result.session)}\nWorkspace update: ${interaction.user.username} started this Session.`,
+    );
+    await interaction.reply(`Created ${thread} with **${result.agent.name}**.`);
+    if (result.initialRequest)
+      await this.sendWorkspaceRequest(
+        thread,
+        result.agent,
+        result.session,
+        result.initialRequest,
+      );
+  }
+
+  private async sendWorkspaceRequest(
+    channel: AnyThreadChannel,
+    agent: Contact,
+    session: Session,
+    request: string,
+  ): Promise<void> {
+    let reply: Message | undefined;
+    const sink: ReplySink = {
+      publishInitial: async (text) => {
+        reply = await channel.send(
+          labelAgentReply(agent, text).slice(0, 2_000),
+        );
+      },
+      update: async (text) => {
+        if (reply)
+          await reply.edit(labelAgentReply(agent, text).slice(0, 2_000));
+      },
+    };
+    try {
+      await this.connector.send(agent, session, request, sink);
+    } catch (error) {
+      await channel.send(`A2A request failed: ${(error as Error).message}`);
+    }
+  }
+
+  private renderCommandResult(
+    result: CommandResult,
+    surface: Surface,
+    actor?: string,
+  ): string {
+    switch (result.kind) {
+      case "error":
+        return result.message;
+      case "agent-list":
+        return result.agents.length
+          ? result.agents
               .map(
-                (contact) =>
-                  `• ${this.aliasFor(contact) ?? contact.id} — ${contact.name}${this.aliasFor(contact) ? ` (${contact.id})` : ""}`,
+                (agent) =>
+                  `• ${this.aliasFor(agent) ?? agent.id} — ${agent.name}`,
               )
               .join("\n")
-          : "No configured A2A agents are currently available.",
-      );
-      return;
-    }
-
-    if (group === "contact" && command === "current") {
-      const contact = await this.selectedContact(surface, policy);
-      await interaction.reply(
-        contact
-          ? `This ${this.surfaceLabel(surface)} is using **${contact.name}** (${this.aliasFor(contact) ?? contact.id}).\nAgent Card: <${contact.agentCardUrl}>`
-          : "No A2A agent is selected. Run `/a2a contact list`, then `/a2a contact use`.",
-      );
-      return;
-    }
-
-    if (group === "contact" && command === "use") {
-      if (!(await this.requireMutationPermission(interaction, surface))) return;
-      const identifier = interaction.options.getString("agent", true);
-      const contact = await this.availableContact(identifier, policy);
-      if (!contact) {
-        await interaction.reply(
-          `Unknown A2A agent ${identifier}. Run \`/a2a contact list\`.`,
-        );
-        return;
-      }
-      this.selectedContactBySurface.set(surfaceKey(surface), contact.id);
-      await interaction.reply(
-        `Selected **${contact.name}** (${this.aliasFor(contact) ?? contact.id}) for this ${this.surfaceLabel(surface)}.`,
-      );
-      return;
-    }
-
-    if (group === "session" && command === "new") {
-      if (!(await this.requireMutationPermission(interaction, surface))) return;
-      const contact = await this.selectedContact(surface, policy);
-      if (!contact) {
-        await interaction.reply(
-          "No A2A agent is selected. Run `/a2a contact list`, then `/a2a contact use`.",
-        );
-        return;
-      }
-      const current = await this.state.getActiveSession(contact.id, surface);
-      const session = await this.createSession(contact, surface);
-      await interaction.reply(
-        surface.kind === "thread"
-          ? this.workspaceIntro(contact, session)
-          : current
-            ? `Archived ${current.id} and started ${session.id} with **${contact.name}**. This does not cancel any already-running remote task.`
-            : `Started ${session.id} with **${contact.name}**.`,
-      );
-      return;
-    }
-
-    if (group === "session" && command === "current") {
-      const contact = await this.selectedContact(surface, policy);
-      if (!contact) {
-        await interaction.reply(
-          `No A2A agent is selected for this ${this.surfaceLabel(surface)}.`,
-        );
-        return;
-      }
-      const session = await this.state.getActiveSession(contact.id, surface);
-      await interaction.reply(
-        session
-          ? this.describeSession(session, true)
-          : `No session has started with **${contact.name}**. Send a message to start one.`,
-      );
-      return;
-    }
-
-    if (group === "session" && command === "list") {
-      const contact = await this.selectedContact(surface, policy);
-      if (!contact) {
-        await interaction.reply(
-          `No A2A agent is selected for this ${this.surfaceLabel(surface)}.`,
-        );
-        return;
-      }
-      const [sessions, active] = await Promise.all([
-        this.state.listSessions(contact.id, surface),
-        this.state.getActiveSession(contact.id, surface),
-      ]);
-      await interaction.reply(
-        sessions.length
-          ? sessions
+          : "No configured A2A agents are currently available.";
+      case "agent-current":
+        return result.agent
+          ? `This ${this.surfaceLabel(surface)} is using **${result.agent.name}** (${this.aliasFor(result.agent) ?? result.agent.id}).\nAgent Card: <${result.agent.agentCardUrl}>`
+          : "No A2A agent is selected. Run `/a2a agent list`, then `/a2a agent use <agent>`.";
+      case "agent-selected":
+        return `Selected **${result.agent.name}** (${this.aliasFor(result.agent) ?? result.agent.id}) for this ${this.surfaceLabel(surface)}.${actor ? `\nWorkspace update: ${actor} selected this agent.` : ""}`;
+      case "session-new":
+        return surface.kind === "thread"
+          ? `${this.workspaceIntro(result.agent, result.session)}${actor ? `\nWorkspace update: ${actor} started this Session.` : ""}`
+          : result.previous
+            ? `Archived ${result.previous.id} and started ${result.session.id} with **${result.agent.name}**.`
+            : `Started ${result.session.id} with **${result.agent.name}**.${actor ? `\nWorkspace update: ${actor} started this Session.` : ""}`;
+      case "session-current":
+        return result.session
+          ? this.describeSession(result.session, true)
+          : `No session has started with **${result.agent.name}**. Send a message to start one.`;
+      case "session-list":
+        return result.sessions.length
+          ? result.sessions
               .map(
                 (session) =>
-                  `${session.id === active?.id ? "• **active**" : "•"} ${this.describeSession(session, false)}`,
+                  `${session.id === result.active?.id ? "• **active**" : "•"} ${this.describeSession(session, false)}`,
               )
               .join("\n")
-          : `No saved sessions for this A2A agent in this ${this.surfaceLabel(surface)}.`,
-      );
-      return;
-    }
-
-    if (group === "session" && command === "use") {
-      if (!(await this.requireMutationPermission(interaction, surface))) return;
-      const contact = await this.selectedContact(surface, policy);
-      const sessionId = interaction.options.getString("session", true);
-      if (!contact) {
-        await interaction.reply(
-          `No A2A agent is selected for this ${this.surfaceLabel(surface)}.`,
-        );
-        return;
-      }
-      const session = await this.state.getSession(sessionId);
-      if (
-        !session ||
-        session.contactId !== contact.id ||
-        surfaceKey(session.surface) !== surfaceKey(surface)
-      ) {
-        await interaction.reply(
-          `Unknown session ${sessionId}. Run \`/a2a session list\`.`,
-        );
-        return;
-      }
-      await this.state.selectSession(contact.id, surface, session.id);
-      await interaction.reply(
-        `Resumed ${session.id} with **${contact.name}**.`,
-      );
-      return;
-    }
-
-    if (group === "task" && command === "list") {
-      const session = await this.currentSession(interaction, surface, policy);
-      if (!session) return;
-      const tasks = await this.state.listTaskRecords(session.id);
-      await interaction.reply(
-        tasks.length
-          ? tasks.map((task) => this.describeTask(task)).join("\n")
-          : `No Tasks have been recorded in ${session.id}.`,
-      );
-      return;
-    }
-
-    if (group === "task" && command === "current") {
-      const session = await this.currentSession(interaction, surface, policy);
-      if (!session) return;
-      const task = (await this.state.listTaskRecords(session.id))[0];
-      if (!task) {
-        await interaction.reply(
-          `No Tasks have been recorded in ${session.id}.`,
-        );
-        return;
-      }
-      await this.replyTaskInspection(interaction, task);
-      return;
-    }
-
-    if (group === "task" && command === "status") {
-      const taskId = interaction.options.getString("task", true);
-      const task = await this.state.getTaskRecord(taskId);
-      const contact = await this.selectedContact(surface, policy);
-      if (
-        !task ||
-        !contact ||
-        task.contactId !== contact.id ||
-        surfaceKey(task.surface) !== surfaceKey(surface)
-      ) {
-        await interaction.reply(
-          `Unknown Task ${taskId}. Run \`/a2a task list\` in the relevant session.`,
-        );
-        return;
-      }
-      await this.replyTaskInspection(interaction, task);
+          : `No saved sessions for this A2A agent in this ${this.surfaceLabel(surface)}.`;
+      case "session-selected":
+        return `Resumed ${result.session.id} with **${result.agent.name}**.${actor ? `\nWorkspace update: ${actor} resumed this Session.` : ""}`;
+      case "task-list":
+        return result.tasks.length
+          ? result.tasks.map((task) => this.describeTask(task)).join("\n")
+          : `No Tasks have been recorded in ${result.session.id}.`;
+      case "task-current":
+        return `No Tasks have been recorded in ${result.session.id}.`;
+      case "task-status":
+        return `${this.describeTask(result.task, true)}${result.refreshError ? `\nRemote status refresh failed: ${result.refreshError}` : ""}`;
     }
   }
 
   private async selectedContact(
     surface: Surface,
-    policy?: ChannelPolicy,
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
   ): Promise<Contact | undefined> {
-    const selected = this.selectedContactBySurface.get(surfaceKey(surface));
-    if (selected) return this.availableContact(selected, policy);
-    if (policy?.defaultAgent)
-      return this.availableContact(policy.defaultAgent, policy);
-    const contacts = await this.availableContacts(policy);
-    return contacts.length === 1 ? contacts[0] : undefined;
+    return this.workspaceCommands.selectedAgent({
+      surface,
+      agentAliases: policy?.agents,
+      defaultAgent: policy?.defaultAgent,
+    });
   }
 
   private surfaceLabel(surface: Surface): string {
-    return surface.kind === "dm" ? "DM" : "thread";
+    return surface.kind === "dm"
+      ? "DM"
+      : surface.kind === "group-dm"
+        ? "group DM"
+        : "thread";
   }
 
   private threadMessageContent(message: Message): string {
@@ -610,7 +666,7 @@ export class DiscordAdapter {
   private async currentSession(
     interaction: ChatInputCommandInteraction,
     surface: Surface,
-    policy?: ChannelPolicy,
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
   ): Promise<Session | undefined> {
     const contact = await this.selectedContact(surface, policy);
     if (!contact) {
@@ -672,31 +728,27 @@ export class DiscordAdapter {
     );
   }
 
-  private async availableContacts(policy?: ChannelPolicy): Promise<Contact[]> {
-    const contacts = await this.state.listContacts();
-    const config = this.runtimeConfig.snapshot().config;
-    const configured = config.managesContacts
-      ? contacts.filter((contact) =>
-          config.agents.some(
-            (agent) => agent.agentCardUrl === contact.agentCardUrl,
-          ),
-        )
-      : contacts;
-    return policy
-      ? configured.filter((contact) =>
-          policy.agents.includes(this.aliasFor(contact) ?? ""),
-        )
-      : configured;
+  private async availableContacts(
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
+  ): Promise<Contact[]> {
+    return [
+      ...(await this.workspaceCommands.availableAgents({
+        surface: { platform: "discord", kind: "dm", id: "availability" },
+        agentAliases: policy?.agents,
+        defaultAgent: policy?.defaultAgent,
+      })),
+    ];
   }
 
   private async availableContact(
     id: string,
-    policy?: ChannelPolicy,
+    policy?: Pick<ChannelPolicy, "agents" | "defaultAgent">,
   ): Promise<Contact | undefined> {
-    const contacts = await this.availableContacts(policy);
-    return contacts.find(
-      (contact) => contact.id === id || this.aliasFor(contact) === id,
-    );
+    return this.workspaceCommands.availableAgent(id, {
+      surface: { platform: "discord", kind: "dm", id: "availability" },
+      agentAliases: policy?.agents,
+      defaultAgent: policy?.defaultAgent,
+    });
   }
 
   private aliasFor(contact: Contact): string | undefined {

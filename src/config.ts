@@ -38,26 +38,31 @@ export interface DiscordConfig {
 export interface SlackConfig {
   botTokenEnv: string;
   appTokenEnv: string;
-  /** Shared Slack workspaces, scoped to their channel and configured agents. */
-  channels: readonly SlackChannelPolicy[];
+  /** Shared Slack conversations, scoped to configured agents. */
+  conversations: readonly SlackConversationPolicy[];
 }
 
 export interface ChannelPolicy {
   id: string;
-  /** Configured Agent aliases available in public threads below this parent. */
+  /** Configured Agent aliases available in child workspaces. */
   agents: readonly string[];
   /** Optional initial Agent alias for a new thread workspace. */
   defaultAgent?: string;
 }
 
-export interface SlackChannelPolicy extends ChannelPolicy {
-  /** Slack user IDs allowed to change a shared thread's Contact or Session. */
-  mutators: readonly string[];
+export type SlackConversationPolicy = ChannelPolicy;
+
+/** Agent selection explicitly available to every private 1:1 bot DM. */
+export interface DirectMessagePolicy {
+  agents: readonly string[];
+  defaultAgent?: string;
 }
 
 export interface Config {
   discord?: DiscordConfig;
   slack?: SlackConfig;
+  /** Absent means private bot DMs are disabled across every adapter. */
+  directMessages?: DirectMessagePolicy;
   stateFile: string;
   editIntervalMs: number;
   pollIntervalMs: number;
@@ -85,7 +90,13 @@ type RawAuthConfig = RawOAuthConfig;
 
 interface RawConfig {
   discord?: { tokenEnv?: unknown; channels?: unknown };
-  slack?: { botTokenEnv?: unknown; appTokenEnv?: unknown; channels?: unknown };
+  slack?: {
+    botTokenEnv?: unknown;
+    appTokenEnv?: unknown;
+    conversations?: unknown;
+    channels?: unknown;
+  };
+  directMessages?: unknown;
   stateFile?: unknown;
   editIntervalMs?: unknown;
   pollIntervalMs?: unknown;
@@ -141,55 +152,62 @@ const staticHeaders = (
   });
 };
 
-const channelPolicy = (raw: unknown, index: number): ChannelPolicy => {
+const conversationPolicy = (
+  raw: unknown,
+  index: number,
+  path: string,
+): ChannelPolicy => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
-    throw new Error(`config.discord.channels[${index}] must be a mapping.`);
+    throw new Error(`${path}[${index}] must be a mapping.`);
   const candidate = raw as {
     id?: unknown;
     agents?: unknown;
     defaultAgent?: unknown;
   };
   if (typeof candidate.id !== "string" || !candidate.id)
-    throw new Error(`config.discord.channels[${index}].id is required.`);
-  const agents = stringList(
-    candidate.agents,
-    `config.discord.channels[${index}].agents`,
-  );
+    throw new Error(`${path}[${index}].id is required.`);
+  const agents = stringList(candidate.agents, `${path}[${index}].agents`);
   if (!agents.length)
-    throw new Error(
-      `config.discord.channels[${index}].agents must not be empty.`,
-    );
+    throw new Error(`${path}[${index}].agents must not be empty.`);
   if (new Set(agents).size !== agents.length)
-    throw new Error(`config.discord.channels[${index}].agents has duplicates.`);
+    throw new Error(`${path}[${index}].agents has duplicates.`);
   const defaultAgent = aliasValue(
     candidate.defaultAgent,
-    `config.discord.channels[${index}].defaultAgent`,
+    `${path}[${index}].defaultAgent`,
   );
   if (defaultAgent && !agents.includes(defaultAgent))
-    throw new Error(
-      `config.discord.channels[${index}].defaultAgent must appear in agents.`,
-    );
+    throw new Error(`${path}[${index}].defaultAgent must appear in agents.`);
   return Object.freeze({ id: candidate.id, agents, defaultAgent });
 };
 
-const slackChannelPolicy = (
+const directMessagePolicy = (raw: unknown): DirectMessagePolicy => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw))
+    throw new Error("config.directMessages must be a mapping.");
+  const candidate = raw as { agents?: unknown; defaultAgent?: unknown };
+  const agents = stringList(candidate.agents, "config.directMessages.agents");
+  if (!agents.length)
+    throw new Error("config.directMessages.agents must not be empty.");
+  if (new Set(agents).size !== agents.length)
+    throw new Error("config.directMessages.agents has duplicates.");
+  const defaultAgent = aliasValue(
+    candidate.defaultAgent,
+    "config.directMessages.defaultAgent",
+  );
+  if (defaultAgent && !agents.includes(defaultAgent))
+    throw new Error(
+      "config.directMessages.defaultAgent must appear in agents.",
+    );
+  return Object.freeze({ agents, defaultAgent });
+};
+
+const channelPolicy = (raw: unknown, index: number): ChannelPolicy =>
+  conversationPolicy(raw, index, "config.discord.channels");
+
+const slackConversationPolicy = (
   raw: unknown,
   index: number,
-): SlackChannelPolicy => {
-  const base = channelPolicy(raw, index);
-  const candidate = raw as { mutators?: unknown };
-  const mutators = stringList(
-    candidate.mutators,
-    `config.slack.channels[${index}].mutators`,
-  );
-  if (!mutators.length)
-    throw new Error(
-      `config.slack.channels[${index}].mutators must not be empty.`,
-    );
-  if (new Set(mutators).size !== mutators.length)
-    throw new Error(`config.slack.channels[${index}].mutators has duplicates.`);
-  return Object.freeze({ ...base, mutators });
-};
+): SlackConversationPolicy =>
+  conversationPolicy(raw, index, "config.slack.conversations");
 
 const agent = (raw: unknown, index: number): ConfiguredAgent => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
@@ -254,6 +272,10 @@ export async function loadConfig(
     throw new Error(
       "config.discord.threadParentChannelIds is unsupported. Use config.discord.channels instead.",
     );
+  if (parsed.slack && "channels" in parsed.slack)
+    throw new Error(
+      "config.slack.channels is unsupported. Use config.slack.conversations instead.",
+    );
   const tokenEnv = parsed.discord?.tokenEnv;
   if (parsed.discord && (typeof tokenEnv !== "string" || !tokenEnv))
     throw new Error("config.discord.tokenEnv is required.");
@@ -286,13 +308,17 @@ export async function loadConfig(
     (parsed.discord?.channels ?? []).map(channelPolicy),
   );
   if (
-    parsed.slack?.channels !== undefined &&
-    !Array.isArray(parsed.slack.channels)
+    parsed.slack?.conversations !== undefined &&
+    !Array.isArray(parsed.slack.conversations)
   )
-    throw new Error("config.slack.channels must be a list.");
-  const slackChannels = Object.freeze(
-    (parsed.slack?.channels ?? []).map(slackChannelPolicy),
+    throw new Error("config.slack.conversations must be a list.");
+  const slackConversations = Object.freeze(
+    (parsed.slack?.conversations ?? []).map(slackConversationPolicy),
   );
+  const directMessages =
+    parsed.directMessages === undefined
+      ? undefined
+      : directMessagePolicy(parsed.directMessages);
   const duplicate = agents.find(
     (configured, index) =>
       agents.findIndex(
@@ -319,19 +345,24 @@ export async function loadConfig(
         throw new Error(
           `config.discord.channels entry ${channel.id} references unknown Agent alias ${alias}.`,
         );
-  for (const channel of slackChannels)
-    for (const alias of channel.agents)
+  for (const conversation of slackConversations)
+    for (const alias of conversation.agents)
       if (!configuredAliases.has(alias))
         throw new Error(
-          `config.slack.channels entry ${channel.id} references unknown Agent alias ${alias}.`,
+          `config.slack.conversations entry ${conversation.id} references unknown Agent alias ${alias}.`,
         );
+  for (const alias of directMessages?.agents ?? [])
+    if (!configuredAliases.has(alias))
+      throw new Error(
+        `config.directMessages references unknown Agent alias ${alias}.`,
+      );
   if (new Set(channels.map((channel) => channel.id)).size !== channels.length)
     throw new Error("config.discord.channels contains duplicate IDs.");
   if (
-    new Set(slackChannels.map((channel) => channel.id)).size !==
-    slackChannels.length
+    new Set(slackConversations.map((conversation) => conversation.id)).size !==
+    slackConversations.length
   )
-    throw new Error("config.slack.channels contains duplicate IDs.");
+    throw new Error("config.slack.conversations contains duplicate IDs.");
   return Object.freeze({
     discord: parsed.discord
       ? Object.freeze({ tokenEnv: tokenEnv as string, channels })
@@ -340,9 +371,10 @@ export async function loadConfig(
       ? Object.freeze({
           botTokenEnv: slackBotTokenEnv as string,
           appTokenEnv: slackAppTokenEnv as string,
-          channels: slackChannels,
+          conversations: slackConversations,
         })
       : undefined,
+    directMessages,
     stateFile: resolve(stateFile),
     editIntervalMs: positiveNumber(
       parsed.editIntervalMs,

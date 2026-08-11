@@ -1,13 +1,17 @@
 display_information:
   name: A2ABridge
 features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
   bot_user:
     display_name: A2ABridge
     always_online: true
   slash_commands:
     - command: /a2a
-      description: Start or manage an A2A agent workspace
-      usage_hint: start [agent] <request> | agents
+      description: Control an A2A agent workspace
+      usage_hint: workspace start [agent] [request] | session new [agent]
       should_escape: false
 oauth_config:
   scopes:
@@ -16,10 +20,18 @@ oauth_config:
       - chat:write
       - commands
       - im:history
+      - im:read
+      - mpim:history
+      - mpim:read
+      - channels:read
+      - groups:read
 settings:
+  interactivity:
+    is_enabled: true
   event_subscriptions:
     bot_events:
       - app_mention
       - message.im
+      - message.mpim
   socket_mode_enabled: true
   token_rotation_enabled: false

@@ -1,25 +1,28 @@
 discord:
   tokenEnv: DISCORD_BOT_TOKEN
-  # Optional: parent channels and the Agent aliases their public threads may use.
+  # Optional: parent channels and the Agent aliases their public/private threads may use.
   channels: []
 
-# Optional Slack Socket Mode adapter. Shared thread workspace changes require a
-# Slack user ID in mutators; DMs do not.
+# Optional Slack Socket Mode adapter. Platform membership controls collaboration;
+# `agents` limits the remote agents a shared conversation may use.
+# Optional cross-adapter private bot-DM policy. Omit to disable private DMs.
+# directMessages:
+#   agents: [concierge]
+#   defaultAgent: concierge
 # slack:
 #   botTokenEnv: SLACK_BOT_TOKEN
 #   appTokenEnv: SLACK_APP_TOKEN
-#   channels:
+#   conversations:
 #     - id: C0123456789
 #       agents: [concierge]
 #       defaultAgent: concierge
-#       mutators: [U0123456789]
 stateFile: ./data/state.json
 editIntervalMs: 1200
 pollIntervalMs: 1500
 configReloadIntervalMs: 2000
 
-# This local file is the Contact allowlist. The bridge validates and reloads
-# Contacts, aliases, and credentials without interrupting an in-flight response.
+# This local file is the Agent allowlist. The bridge validates and reloads
+# Agents, aliases, and credentials without interrupting an in-flight response.
 # Changes to timing, stateFile, or tokenEnv require a restart. Keep real client
 # secrets out of Git.
 # Replace [] with a list like this to configure an agent:

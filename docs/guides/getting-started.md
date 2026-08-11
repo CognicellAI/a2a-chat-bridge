@@ -1,8 +1,23 @@
 # Get started
 
-**Audience:** a workspace owner running the bridge. **Time:** about 15 minutes.
+**Audience:** a self-hosting operator. **Time:** about 15 minutes before
+platform-app setup.
 
-## 1. Install and configure
+This guide installs the bridge and configures one remote A2A agent. After it is
+running, choose [Discord](discord/README.md) or [Slack](slack/README.md) to
+connect a chat platform and make your first request.
+
+## Prerequisites
+
+- Bun for local development, or Docker and Docker Compose for a containerized
+  deployment.
+- An A2A agent's exact Agent Card URL. Do not append or remove discovery-path
+  segments from the URL supplied by the agent operator.
+- The agent's required authentication material, if its Agent Card requires it.
+- A Discord bot token, a Slack bot token and app token, or both—depending on
+  the adapters you enable.
+
+## 1. Create private configuration
 
 ```sh
 cd a2a-chat-bridge
@@ -10,12 +25,11 @@ bun install
 cp config.example.yaml config.yaml
 ```
 
-Edit `config.yaml` with your remote A2A agent and its authentication mode:
+Keep `config.yaml` private. It may contain client secrets or static authorization
+headers and must not be committed. Start with one configured agent:
 
 ```yaml
-discord:
-  tokenEnv: DISCORD_BOT_TOKEN
-  channels: [] # optional public-thread workspaces
+stateFile: ./data/state.json
 
 agents:
   - agentCardUrl: https://agent.example/.well-known/agent-card.json
@@ -23,65 +37,71 @@ agents:
     auth:
       type: oauth-client-credentials
       tokenUrl: https://auth.example/oauth/token
-      clientId: replace-with-client-id
-      clientSecret: replace-with-client-secret
+      clientId: bridge-client-id
+      clientSecret: replace-with-a-secret
       scopes: [a2a.invoke]
 ```
 
-Keep `config.yaml` private. The Agent Card URL is used exactly as written.
+Use `alias` in chat commands, such as `concierge`. Authentication is explicit
+per agent; see [configuration](configuration.md#agents-and-authentication) for
+public agents and static headers.
 
-## 2. Connect Discord
+## 2. Provide platform tokens
 
-Create a Discord application and bot, then install it in your test server.
-Give it **View Channel**, **Send Messages in Threads**, and application-command
-access where it will be used.
+Use environment variables named by your configuration. Keep actual token values
+in your shell environment or a local `.env` file, never in `config.yaml`.
 
 ```sh
-export DISCORD_BOT_TOKEN='paste-the-bot-token-here'
+export DISCORD_BOT_TOKEN='replace-with-discord-token'
+export SLACK_BOT_TOKEN='replace-with-slack-bot-token'
+export SLACK_APP_TOKEN='replace-with-slack-app-token'
+```
+
+You only need variables for enabled adapters. Set the corresponding `discord`
+or `slack` block in `config.yaml`; see the adapter guides for examples.
+
+## 3. Run the bridge
+
+For development:
+
+```sh
 bun run dev
 ```
 
-The bridge needs no privileged Message Content intent. Successful startup logs
-the bot identity and `/a2a` command registration.
+For Docker Compose, copy `.env.example` to `.env`, set only the required token
+variables, then run:
 
-## 3. Send the first request
-
-In a bot DM, use `/a2a contact list`. If more than one Contact is listed, use
-`/a2a contact use`. Then send ordinary text. The bridge creates a local Session
-and retains the remote `contextId` for later messages.
-
-## Optional: collaborate in a public thread
-
-Add a channel policy using the parent text-channel ID and configured Agent
-aliases—not a thread ID:
-
-```yaml
-discord:
-  channels:
-    - id: "123456789012345678"
-      agents: [concierge]
-      defaultAgent: concierge
+```sh
+docker compose up --build -d
+docker compose logs --tail=100 bridge
 ```
 
-Create a public thread below that channel. Mention the bot to send work to its
-shared Session. The thread starter or a member with `Manage Threads` may change
-the Contact or Session; all participants can invoke the agent and inspect Tasks.
+Compose stores bridge metadata in its named volume. Local development uses the
+`stateFile` you configured. That metadata contains local agent, Session, and
+Task references—not the remote agent's work or memory.
 
-## Optional: connect Slack
+## 4. Verify startup
 
-Enable Socket Mode in the Slack app, create an app-level token with
-`connections:write`, and add `app_mentions:read`, `im:history`, `chat:write`,
-and `commands` to the bot. Import the supplied
-[`slack-app-manifest.yaml`](slack-app-manifest.yaml) or register `/a2a`, then
-reinstall the app. Store the resulting tokens in `.env`, then add the `slack`
-block from the [configuration reference](configuration.md#slack-socket-mode).
+Look for one line per enabled adapter:
 
-Slack DMs accept ordinary text. In an allowlisted Slack channel, use
-`/a2a start [agent] <request>` to create an agent workspace thread. Mention the
-bot there to invoke the agent; use `@Bridge /a2a …` for controls. Slack native
-slash commands cannot run in message threads.
+```text
+Connected to Discord as …
+Registered /a2a Discord application command.
+Connected to Slack through Socket Mode.
+```
+
+Next, finish platform integration:
+
+- [Connect Discord](discord/README.md)
+- [Connect Slack](slack/README.md)
+
+Once an adapter is connected, use its guide to choose the right chat type. In a
+shared channel, start a workspace with `/a2a workspace start [agent] [request]`.
+In an enabled DM or an existing workspace thread, start or switch Sessions with
+`/a2a session …`.
 
 ## Next steps
 
-- [Configuration reference](configuration.md) — every setting and auth mode.
-- [Operate the bridge](operations.md) — Contacts, Sessions, Tasks, and recovery.
+- [Command reference](commands.md)
+- [Configuration reference](configuration.md)
+- [Operations and troubleshooting](operations.md)

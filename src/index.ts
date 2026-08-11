@@ -2,6 +2,7 @@ import { loadConfig } from "./config.js";
 import { A2AConnector } from "./core/a2a-connector.js";
 import { ContactRegistry } from "./core/contacts.js";
 import { RuntimeConfig } from "./core/runtime-config.js";
+import { WorkspaceCommands } from "./core/workspace-commands.js";
 import { DiscordAdapter } from "./discord/adapter.js";
 import { SlackAdapter } from "./slack/adapter.js";
 import { JsonStateStore } from "./infra/json-state-store.js";
@@ -16,6 +17,11 @@ const connector = new A2AConnector(state, {
   pollIntervalMs: config.pollIntervalMs,
   editIntervalMs: config.editIntervalMs,
 });
+const workspaceCommands = new WorkspaceCommands(
+  state,
+  connector,
+  runtimeConfig,
+);
 if (config.discord) {
   const token = process.env[config.discord.tokenEnv];
   if (!token)
@@ -26,6 +32,7 @@ if (config.discord) {
     contacts,
     connector,
     runtimeConfig,
+    workspaceCommands,
   ).start();
 }
 if (config.slack) {
@@ -42,5 +49,6 @@ if (config.slack) {
     contacts,
     connector,
     runtimeConfig,
+    workspaceCommands,
   ).start();
 }

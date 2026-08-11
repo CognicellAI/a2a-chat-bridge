@@ -27,10 +27,15 @@ Rules:
 | [0006](0006-trusted-oauth-issuer-metadata.md)          | Trusted OAuth issuer metadata for M2M credentials | superseded | 2026-08-08 |
 | [0007](0007-hot-reloaded-local-agent-configuration.md) | Hot-reloaded local Agent configuration            | accepted   | 2026-08-08 |
 | [0008](0008-archived-sessions-and-task-records.md)     | Archived Sessions and Task Records                | accepted   | 2026-08-09 |
-| [0009](0009-public-thread-workspaces.md)               | Public Discord thread workspaces                  | accepted   | 2026-08-09 |
+| [0009](0009-public-thread-workspaces.md)               | Public Discord thread workspaces                  | superseded | 2026-08-09 |
 | [0010](0010-explicit-per-agent-authentication.md)      | Explicit per-Agent authentication                 | accepted   | 2026-08-09 |
 | [0011](0011-channel-agent-policies.md)                 | Channel-scoped Agent policies                     | accepted   | 2026-08-09 |
 | [0012](0012-thread-workspace-introduction.md)          | Thread workspace introduction                     | accepted   | 2026-08-09 |
 | [0013](0013-public-v0-release-governance.md)           | Public v0.1.0 release governance                  | accepted   | 2026-08-09 |
-| [0014](0014-slack-socket-mode-adapter.md)              | Slack Socket Mode adapter                         | accepted   | 2026-08-10 |
+| [0014](0014-slack-socket-mode-adapter.md)              | Slack Socket Mode adapter                         | superseded | 2026-08-10 |
 | [0015](0015-native-slack-command-launcher.md)          | Native Slack command launcher                     | accepted   | 2026-08-10 |
+| [0016](0016-cross-platform-command-parity.md)          | Cross-platform command parity                     | superseded | 2026-08-10 |
+| [0017](0017-native-platform-collaboration.md)          | Native-platform collaboration                     | accepted   | 2026-08-10 |
+| [0018](0018-conversation-surface-coverage.md)          | Conversation-surface coverage                     | superseded | 2026-08-10 |
+| [0019](0019-direct-message-agent-policy.md)            | Direct-message Agent policy                       | accepted   | 2026-08-10 |
+| [0020](0020-explicit-workspace-launch-command.md)      | Explicit workspace launch command                 | accepted   | 2026-08-10 |

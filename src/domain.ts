@@ -10,7 +10,7 @@ export interface Contact {
 
 export interface Surface {
   platform: "discord" | "slack";
-  kind: "dm" | "thread";
+  kind: "dm" | "group-dm" | "thread";
   id: string;
 }
 
